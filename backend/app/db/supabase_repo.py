@@ -5,7 +5,7 @@ Toutes les valeurs passent par des paramètres de requête PostgREST : aucune
 concaténation SQL, pas d'injection possible.
 """
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
 import httpx
@@ -143,7 +143,7 @@ class SupabaseRepository:
                 "chance": item.chance,
                 "source": item.source,
                 "source_url": item.source_url,
-                "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                "retrieved_at": datetime.now(UTC).isoformat(),
             }
             for item in draws
         ]
@@ -231,7 +231,7 @@ class SupabaseRepository:
             json_body={
                 "status": status,
                 "reviewed_by": reviewer_id,
-                "reviewed_at": datetime.now(timezone.utc).isoformat(),
+                "reviewed_at": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -274,7 +274,7 @@ class SupabaseRepository:
         )
 
     async def has_active_premium(self, user_id: str) -> bool:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         rows = await self._select(
             "premium_entitlements",
             {
@@ -401,7 +401,7 @@ class SupabaseRepository:
             "PATCH",
             "notifications",
             params={"id": f"eq.{notification_id}", "user_id": f"eq.{user_id}"},
-            json_body={"read_at": datetime.now(timezone.utc).isoformat()},
+            json_body={"read_at": datetime.now(UTC).isoformat()},
             headers={"Prefer": "return=representation"},
         )
         if not response.json():

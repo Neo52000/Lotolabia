@@ -1,7 +1,7 @@
 name: lotolab_ia
-description: Application mobile d'analyse statistique du Loto.
+description: "LotoLab IA — outil indépendant d'analyse statistique du Loto. Analysez. Comprenez. Jouez mieux."
 publish_to: "none"
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -9,7 +9,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.2
+  flutter_riverpod: ^2.5.1
+  dio: ^5.7.0
+  go_router: ^14.2.0
+  fl_chart: ^0.69.0
+  shared_preferences: ^2.3.2
+  supabase_flutter: ^2.8.0
+  intl: ^0.19.0
+  share_plus: ^10.0.2
 
 dev_dependencies:
   flutter_test:

@@ -8,7 +8,7 @@ Deux implémentations du même protocole :
     uniquement).
 """
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from itertools import count
 from typing import Any, Protocol
 
@@ -83,7 +83,7 @@ class Repository(Protocol):
 
 
 def _utcnow() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class MemoryRepository:
@@ -146,7 +146,7 @@ class MemoryRepository:
                 chance=item.chance,
                 source=item.source,
                 source_url=item.source_url,
-                retrieved_at=datetime.now(timezone.utc),
+                retrieved_at=datetime.now(UTC),
             )
             existing_dates.add(item.draw_date)
             inserted += 1
@@ -234,7 +234,7 @@ class MemoryRepository:
         self._profiles.setdefault(user_id, {"id": user_id})["role"] = role
 
     async def has_active_premium(self, user_id: str) -> bool:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for ent in self._entitlements.values():
             if ent["user_id"] != user_id or ent["status"] != "active":
                 continue

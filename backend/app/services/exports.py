@@ -2,7 +2,7 @@
 
 import csv
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -42,7 +42,7 @@ def analysis_to_pdf(title: str, sections: list[tuple[str, list[list[str]]]]) -> 
     elements = [
         Paragraph(f"LotoLab IA — {title}", styles["Title"]),
         Paragraph(
-            f"Généré le {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')}",
+            f"Généré le {datetime.now(UTC).strftime('%d/%m/%Y %H:%M UTC')}",
             small,
         ),
         Spacer(1, 12),

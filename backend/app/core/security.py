@@ -31,10 +31,10 @@ class AuthUser:
 
 
 def _decode_token(token: str, settings: Settings) -> dict:
-    header = jwt.get_unverified_header(token)
-    algorithm = header.get("alg", "HS256")
     options = {"verify_aud": False}
     try:
+        header = jwt.get_unverified_header(token)
+        algorithm = header.get("alg", "HS256")
         if algorithm == "HS256":
             if not settings.supabase_jwt_secret:
                 raise UnauthorizedError("Vérification JWT non configurée.")

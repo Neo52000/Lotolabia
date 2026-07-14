@@ -1,0 +1,193 @@
+"""Endpoints du compte utilisateur : profil, préférences, favoris, grilles,
+notifications, Premium et droits RGPD (export / suppression)."""
+
+from datetime import UTC
+
+from fastapi import APIRouter, Body, Depends
+from pydantic import BaseModel, Field
+
+from ...core.errors import AppError
+from ...core.security import AuthUser, require_user
+from ...db.repository import Repository
+from ...schemas.grids import SavedGrid, SavedGridCreate
+from ...services.premium import PremiumPolicy
+from ..deps import get_policy, get_repository
+
+router = APIRouter(prefix="/me", tags=["Compte"])
+
+
+class PreferencesUpdate(BaseModel):
+    theme: str | None = Field(default=None, pattern="^(system|light|dark)$")
+    language: str | None = Field(default=None, max_length=5)
+    notifications_enabled: bool | None = None
+    notify_new_draw: bool | None = None
+    notification_weekly_limit: int | None = Field(default=None, ge=0, le=10)
+    consent_ads: bool | None = None
+    consent_analytics: bool | None = None
+
+
+class FavoriteRequest(BaseModel):
+    number: int = Field(ge=1, le=49)
+    is_chance: bool = False
+
+
+@router.get("")
+async def my_profile(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> dict:
+    profile = await repository.get_profile(user.id)
+    return {
+        "id": user.id,
+        "email": user.email,
+        "display_name": (profile or {}).get("display_name"),
+        "role": user.role,
+        "is_premium": user.is_premium,
+    }
+
+
+@router.get("/preferences")
+async def my_preferences(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> dict:
+    return await repository.get_preferences(user.id) or {"user_id": user.id}
+
+
+@router.put("/preferences")
+async def update_preferences(
+    update: PreferencesUpdate,
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> dict:
+    data = update.model_dump(exclude_none=True)
+    if {"consent_ads", "consent_analytics"} & data.keys():
+        from datetime import datetime
+
+        data["consent_updated_at"] = datetime.now(UTC).isoformat()
+    return await repository.upsert_preferences(user.id, data)
+
+
+@router.get("/grids", response_model=list[SavedGrid])
+async def my_grids(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> list[SavedGrid]:
+    rows = await repository.list_saved_grids(user.id)
+    return [SavedGrid(**{k: v for k, v in row.items() if k in SavedGrid.model_fields}) for row in rows]
+
+
+@router.post("/grids", response_model=SavedGrid, status_code=201)
+async def save_grid(
+    grid: SavedGridCreate,
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+    policy: PremiumPolicy = Depends(get_policy),
+) -> SavedGrid:
+    limit = policy.saved_grids_limit(user)
+    if limit is not None and await repository.count_saved_grids(user.id) >= limit:
+        raise AppError(
+            "grid_limit_reached",
+            f"L'offre gratuite est limitée à {limit} grilles enregistrées. "
+            "Passez à Premium pour un nombre illimité.",
+            402,
+        )
+    row = await repository.create_saved_grid(user.id, grid.model_dump())
+    return SavedGrid(**{k: v for k, v in row.items() if k in SavedGrid.model_fields})
+
+
+@router.delete("/grids/{grid_id}", status_code=204)
+async def delete_grid(
+    grid_id: int,
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> None:
+    await repository.delete_saved_grid(user.id, grid_id)
+
+
+@router.get("/favorites")
+async def my_favorites(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> list[dict]:
+    return await repository.list_favorites(user.id)
+
+
+@router.post("/favorites", status_code=201)
+async def add_favorite(
+    favorite: FavoriteRequest,
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> dict:
+    if favorite.is_chance and favorite.number > 10:
+        raise AppError("invalid_number", "Le numéro Chance est compris entre 1 et 10.")
+    return await repository.add_favorite(user.id, favorite.number, favorite.is_chance)
+
+
+@router.delete("/favorites", status_code=204)
+async def remove_favorite(
+    favorite: FavoriteRequest,
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> None:
+    await repository.remove_favorite(user.id, favorite.number, favorite.is_chance)
+
+
+@router.get("/notifications")
+async def my_notifications(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> list[dict]:
+    return await repository.list_notifications(user.id)
+
+
+@router.post("/notifications/{notification_id}/read", status_code=204)
+async def mark_read(
+    notification_id: int,
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> None:
+    await repository.mark_notification_read(user.id, notification_id)
+
+
+@router.get("/premium")
+async def my_premium(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> dict:
+    return {
+        "is_premium": user.is_premium,
+        "entitlements": await repository.list_entitlements(user.id),
+    }
+
+
+# --------------------------------------------------------------------- RGPD
+@router.get("/export")
+async def export_my_data(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+) -> dict:
+    """Export RGPD : la totalité des données détenues sur l'utilisateur."""
+    return await repository.export_user_data(user.id)
+
+
+@router.delete("", status_code=204)
+async def delete_my_account(
+    user: AuthUser = Depends(require_user),
+    repository: Repository = Depends(get_repository),
+    confirm: str = Body(..., embed=True),
+) -> None:
+    """Suppression définitive du compte et de toutes les données associées."""
+    if confirm != "SUPPRIMER":
+        raise AppError(
+            "confirmation_required",
+            'Confirmez la suppression en envoyant {"confirm": "SUPPRIMER"}.',
+        )
+    await repository.add_audit(
+        actor_id=user.id,
+        actor_email=user.email,
+        action="account_self_delete",
+        target_type="user",
+        target_id=user.id,
+    )
+    await repository.delete_user_data(user.id)

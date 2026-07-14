@@ -15,6 +15,7 @@ Règles :
 """
 
 import logging
+from datetime import UTC
 
 import httpx
 
@@ -224,6 +225,6 @@ def _raw_to_csv(raw: dict) -> str:
 
 
 def _now() -> str:
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()

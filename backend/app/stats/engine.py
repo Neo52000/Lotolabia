@@ -112,7 +112,7 @@ def gaps(draws: list[Draw]) -> dict:
     entries = []
     for n in MAIN_RANGE:
         positions = appearances[n]
-        number_gaps = [b - a for a, b in zip(positions, positions[1:])]
+        number_gaps = [b - a for a, b in zip(positions, positions[1:], strict=False)]
         entries.append(
             {
                 "number": n,
@@ -185,7 +185,7 @@ def draw_shapes(draws: list[Draw]) -> dict:
 
     for draw in draws:
         numbers = sorted(draw.numbers)
-        consecutive_pairs = sum(1 for a, b in zip(numbers, numbers[1:]) if b - a == 1)
+        consecutive_pairs = sum(1 for a, b in zip(numbers, numbers[1:], strict=False) if b - a == 1)
         consecutive_counts[consecutive_pairs] += 1
         for n in numbers:
             decade_counter[(n - 1) // 10] += 1
@@ -311,7 +311,7 @@ def number_profile(draws: list[Draw], number: int, is_chance: bool = False) -> d
         if present:
             positions.append(index)
             last_dates.append(draw.draw_date.isoformat())
-    number_gaps = [b - a for a, b in zip(positions, positions[1:])]
+    number_gaps = [b - a for a, b in zip(positions, positions[1:], strict=False)]
     total = len(draws)
     result = _base(
         draws,

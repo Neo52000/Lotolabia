@@ -15,7 +15,7 @@ instance de l'API doit le porter).
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -79,7 +79,7 @@ class SyncScheduler:
             )
             return
         delay = self._settings.collector_retry_backoff_seconds * (2 ** (attempt - 1))
-        run_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
+        run_at = datetime.now(UTC) + timedelta(seconds=delay)
         self._scheduler.add_job(
             self._run,
             DateTrigger(run_date=run_at),
