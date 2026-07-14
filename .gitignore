@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.dart_tool/
+build/
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+android/key.properties
+ios/Runner/GoogleService-Info.plist
