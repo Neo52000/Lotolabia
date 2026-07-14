@@ -263,6 +263,14 @@ class EntitlementGrant(BaseModel):
     expires_at: str | None = None
 
 
+@router.get("/premium")
+async def list_premium(
+    user_id: str | None = Query(None),
+    repository: Repository = Depends(get_repository),
+) -> list[dict]:
+    return await repository.list_entitlements(user_id)
+
+
 @router.post("/premium/grant", status_code=201)
 async def grant_premium(
     grant: EntitlementGrant,
