@@ -62,6 +62,16 @@ class Settings(BaseSettings):
     # --- Cache --------------------------------------------------------------
     cache_ttl_seconds: int = 300
 
+    # --- Achats intégrés (stores) ---------------------------------------------
+    # La validation des reçus reste désactivée tant que les identifiants des
+    # consoles (Google Play / App Store) ne sont pas configurés.
+    store_validation_enabled: bool = False
+    google_play_package_name: str = ""
+    google_play_service_account_json: str = Field(
+        default="", description="Chemin du JSON de compte de service Google Play (serveur uniquement)"
+    )
+    app_store_shared_secret: str = ""
+
     # --- Limites offre gratuite ----------------------------------------------
     free_saved_grids_limit: int = 5
     free_generator_daily_limit: int = 10

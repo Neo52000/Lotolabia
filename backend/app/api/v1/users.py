@@ -161,6 +161,44 @@ async def my_premium(
     }
 
 
+class ReceiptSubmission(BaseModel):
+    platform: str = Field(pattern="^(google_play|app_store)$")
+    product: str = Field(pattern="^(monthly|yearly|lifetime)$")
+    receipt: str = Field(max_length=20_000, description="Jeton d'achat / reçu émis par le store")
+
+
+@router.post("/premium/receipt", status_code=202)
+async def submit_receipt(
+    submission: ReceiptSubmission,
+    user: AuthUser = Depends(require_user),
+) -> dict:
+    """Validation d'un reçu d'achat (Google Play / App Store).
+
+    Prévu techniquement mais désactivé tant que les identifiants des consoles
+    ne sont pas configurés (STORE_VALIDATION_ENABLED + clés en variables
+    d'environnement). Aucun droit n'est accordé sans validation réelle du reçu
+    auprès du store — jamais de validation simulée.
+    """
+    from ...core.config import get_settings
+
+    settings = get_settings()
+    if not settings.store_validation_enabled:
+        raise AppError(
+            "store_validation_disabled",
+            "La validation des achats n'est pas encore activée sur ce serveur. "
+            "Voir docs/MONETISATION.md pour la configuration des stores.",
+            501,
+        )
+    # Point d'intégration : validation serveur-à-serveur du reçu
+    # (Google Play Developer API / App Store Server API), puis
+    # repository.grant_entitlement(...) avec receipt_ref et expiration.
+    raise AppError(
+        "store_validation_not_implemented",
+        "Validation des reçus à brancher avec les identifiants des consoles.",
+        501,
+    )
+
+
 # --------------------------------------------------------------------- RGPD
 @router.get("/export")
 async def export_my_data(

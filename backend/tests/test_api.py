@@ -237,3 +237,14 @@ def test_pdf_export_premium_only(seeded_client):
     assert allowed.status_code == 200
     assert allowed.headers["content-type"] == "application/pdf"
     assert allowed.content[:4] == b"%PDF"
+
+
+# ------------------------------------------------------------------ achats intégrés
+def test_receipt_validation_disabled_returns_501(seeded_client):
+    response = seeded_client.post(
+        "/api/v1/me/premium/receipt",
+        json={"platform": "google_play", "product": "yearly", "receipt": "jeton-test"},
+        headers=auth_header(USER_ID),
+    )
+    assert response.status_code == 501
+    assert response.json()["error"]["code"] == "store_validation_disabled"
