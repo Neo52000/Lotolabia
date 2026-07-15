@@ -28,11 +28,19 @@ COLLECTOR_RETRY_BACKOFF_SECONDS=60
 ```
 
 > ⚠️ **À valider au premier déploiement** : l'environnement de développement de ce
-> dépôt n'avait pas accès réseau à fdj.fr (politique de proxy). Les URLs exactes des
-> fichiers historiques officiels doivent donc être vérifiées depuis l'environnement de
-> production (page « historique des tirages » du site officiel) et renseignées dans
-> `COLLECTOR_HISTORY_URLS`. Le pipeline, lui, est intégralement testé sur des fixtures
-> reproduisant les formats publiés.
+> dépôt n'a aucun accès réseau à `fdj.fr` (tout le domaine et ses sous-domaines sont
+> refusés par le proxy — `CONNECT tunnel failed, 403`). La page de référence est
+> https://www.fdj.fr/jeux-de-tirage/loto/historique, mais c'est un **portail**, pas
+> un lien de fichier direct : le(s) véritable(s) URL(s) de téléchargement CSV/ZIP
+> doivent être extraites manuellement (bouton de téléchargement du site, ou onglet
+> Réseau des outils développeur du navigateur) puis renseignées dans
+> `COLLECTOR_HISTORY_URLS`. Le pipeline, lui, est intégralement testé sur des
+> fixtures reproduisant les formats publiés (voir `backend/app/collector/parser.py`
+> et `backend/tests/test_parser.py`) ; si le format réel diffère de ceux couverts
+> par `COLUMN_MAPPINGS`, l'import échoue explicitement (`FormatChangeError`, job
+> `failed` + alerte) au lieu d'insérer des données incorrectes — envoyer un
+> échantillon du fichier réel (quelques lignes, en-têtes compris) pour ajuster le
+> mappage si nécessaire.
 
 ## Planification
 
