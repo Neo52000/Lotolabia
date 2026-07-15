@@ -1,0 +1,12 @@
+# Configuration Netlify — site web LotoLab IA (répertoire web/)
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Variables à définir dans l'interface Netlify (Site settings → Environment) :
+#   NEXT_PUBLIC_API_BASE_URL, NEXT_PUBLIC_SITE_URL,
+#   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY

@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend — lint + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: backend }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Ruff (lint)
+        run: ruff check app tests
+      - name: Pytest
+        run: python -m pytest -q
+      - name: Audit des dépendances
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt || echo "::warning::Vulnérabilités détectées — examiner le rapport ci-dessus"
+
+  migrations:
+    name: Vérification des migrations SQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+        ports: ['5432:5432']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Appliquer les migrations sur un Postgres vierge
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # Le schéma auth de Supabase est simulé a minima pour valider la syntaxe
+          # et la cohérence des migrations (FK vers auth.users).
+          psql -h localhost -U postgres -c "create schema auth;"
+          psql -h localhost -U postgres -c "create table auth.users (id uuid primary key, raw_user_meta_data jsonb, email text);"
+          psql -h localhost -U postgres -c "create or replace function auth.uid() returns uuid language sql as \$\$ select null::uuid \$\$;"
+          psql -h localhost -U postgres -c "create role anon nologin; create role authenticated nologin;"
+          for f in supabase/migrations/*.sql; do
+            echo "== $f"
+            psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+  web:
+    name: Web — lint + tests + build
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: web }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Build de production
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+          NEXT_PUBLIC_SITE_URL: https://staging.example.invalid
+      - name: Audit des dépendances
+        run: npm audit --audit-level=high || echo "::warning::Vulnérabilités npm détectées"
+
+  flutter:
+    name: Flutter — analyze + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: mobile }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
