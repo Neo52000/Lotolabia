@@ -1,0 +1,29 @@
+# Exemple de configuration Fly.io pour l'API LotoLab IA.
+# Copier vers fly.toml après `fly launch --no-deploy` (qui génère app/region réels),
+# puis ajuster. Ne pas committer le fly.toml final tel quel si `fly launch`
+# y insère des identifiants propres au compte.
+
+app = "lotolab-ia-api"   # à remplacer par le nom réel choisi
+primary_region = "cdg"   # Paris — rapproche l'API de Supabase eu-west-3
+
+[build]
+
+[env]
+  ENVIRONMENT = "production"
+  PORT = "8000"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  path = "/health"
+  interval = "30s"
+  timeout = "5s"
+
+# Secrets à définir via `fly secrets set` (jamais dans ce fichier) :
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET,
+#   CORS_ORIGINS, COLLECTOR_HISTORY_URLS, SCHEDULER_ENABLED=true

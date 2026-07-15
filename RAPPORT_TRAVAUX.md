@@ -4,11 +4,26 @@
 **Point de départ :** MVP de 16 fichiers (audit détaillé dans `AUDIT_TECHNIQUE.md`)
 **Résultat :** monorepo complet prêt pour une bêta réelle.
 
-> 🌐 **Site déployé** : le projet Netlify `lotolabia` a été connecté au dépôt et le
-> build de la branche a réussi (statut `ready` confirmé côté Netlify) :
-> http://lotolabia.netlify.app — les pages tolèrent l'absence d'API tant qu'elle
-> n'est pas hébergée (voir §3, point 2) et s'affichent alors avec la mention
-> « données en cours de collecte ».
+> 🌐 **Site en production (partielle)** : le projet Netlify `lotolabia` est
+> connecté au dépôt, build `ready` : http://lotolabia.netlify.app. Les variables
+> `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL` et
+> `NEXT_PUBLIC_SUPABASE_ANON_KEY` ont été configurées côté Netlify (clé publique
+> `anon`, protégée par RLS — sans risque à exposer côté client). Le back-office
+> `/admin` peut donc s'authentifier contre le vrai projet Supabase. **Il manque
+> encore `NEXT_PUBLIC_API_BASE_URL`** : tant que l'API FastAPI n'est pas hébergée
+> quelque part (voir §3, point 2 — nécessite un compte externe que je ne peux pas
+> créer à votre place), les pages qui dépendent des statistiques calculées par
+> l'API s'affichent avec la mention « données en cours de collecte » au lieu des
+> vraies stats — même si la base contient déjà 2 851 tirages réels. Un
+> `backend/Dockerfile` et un exemple `backend/fly.toml.example` sont fournis pour
+> que l'hébergement soit immédiat une fois le compte créé.
+>
+> Je n'ai pas pu déclencher un nouveau build Netlify directement depuis cette
+> session (la commande officielle du MCP Netlify passe par un jeton en argument
+> de ligne de commande, bloqué par le contrôle de sécurité de l'environnement —
+> déjà rencontré et documenté précédemment). Un nouveau build se déclenchera
+> automatiquement au prochain push sur la branche (déjà le mécanisme utilisé
+> jusqu'ici), ce qui suffira à prendre en compte ces nouvelles variables.
 >
 > 📊 **Base de données peuplée** : l'utilisateur a fourni 4 fichiers ZIP officiels
 > (`nouveau_loto.zip`, `loto2017.zip`, `loto_201902.zip`, `loto_201911.zip`).
@@ -153,7 +168,7 @@
 |---|---|---|
 | 1 | **URLs officielles des fichiers historiques de tirages** — le format réel a été validé avec succès (11 fichiers officiels fournis en 3 lots, 0 rejet sur les fichiers compatibles, historique 2008-2026 importé) ; il reste à identifier les URLs de téléchargement direct depuis un réseau non filtré (l'environnement de dev bloque fdj.fr) pour automatiser les futures synchronisations | `COLLECTOR_HISTORY_URLS` (API) |
 | 1 bis | **Décision requise — ancien format Loto (pré-2008)** : les fichiers `loto.zip` et `sloto.zip` fournis contiennent l'ancien Loto/Super Loto (6 numéros + complémentaire, avant la réforme de 2008), un jeu différent du Loto actuel (5 + Chance) que le schéma `draws` ne modélise pas. Le parseur les a rejetés automatiquement (garde-fou anti-données-incompatibles), aucune donnée n'a été forcée en base. **Deux options** : (a) laisser ces fichiers hors périmètre — l'app ne couvre que le Loto actuel, ce qui est cohérent avec son objet ; (b) étendre le schéma (nouveau `draw_type`, table ou colonnes dédiées à 6 numéros + complémentaire) et le parseur pour les intégrer comme jeu historique distinct — travail non trivial (migration, stats, générateur à adapter). À trancher par vous. | Décision produit — pas d'action technique tant que non tranché |
-| 2 | Hébergeur de l'API (Fly.io/Railway/Scaleway…) + variables d'env — **le site est déployé (http://lotolabia.netlify.app) mais n'a pas encore d'API à interroger** | `docs/DEPLOIEMENT.md` §1, puis `NEXT_PUBLIC_API_BASE_URL` sur Netlify |
+| 2 | Hébergeur de l'API (Fly.io/Railway/Scaleway…) + variables d'env — **le site est déployé (http://lotolabia.netlify.app), les variables Supabase sont configurées sur Netlify, mais il n'y a toujours pas d'API à interroger.** `backend/Dockerfile` + `backend/fly.toml.example` sont prêts pour un déploiement immédiat dès qu'un compte est créé | `docs/DEPLOIEMENT.md` §1, puis `NEXT_PUBLIC_API_BASE_URL` sur Netlify + `CORS_ORIGINS` côté API |
 | 3 | Domaine définitif du site (actuellement `lotolabia.netlify.app`) | `NEXT_PUBLIC_SITE_URL`, Netlify → Domain settings, Search Console |
 | 4 | Jeton + site Netlify pour la CI automatisée (le déploiement initial a été fait manuellement via l'interface Netlify) | secrets `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID(_PROD)` |
 | 5 | Google Play Console (25 $ une fois) + keystore de signature | secrets `ANDROID_*` du workflow |

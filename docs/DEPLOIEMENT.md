@@ -22,17 +22,10 @@ Variables d'environnement requises (voir `backend/.env.example`) :
 `COLLECTOR_HISTORY_URLS`, `SCHEDULER_ENABLED=true` (sur **une seule** instance),
 `RATE_LIMIT_DEFAULT`.
 
-Dockerfile minimal :
-
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY backend/app ./app
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
+Le `Dockerfile` est fourni dans `backend/Dockerfile` (image `python:3.11-slim`,
+`uvicorn` en CMD, 2 workers). Un exemple de config Fly.io est fourni dans
+`backend/fly.toml.example` (à copier vers `fly.toml` après `fly launch`, région
+`cdg` recommandée pour rester proche de Supabase eu-west-3).
 
 Points d'attention :
 - `/docs` (Swagger) est automatiquement désactivé quand `ENVIRONMENT=production` ;
