@@ -1,8 +1,14 @@
 # Rapport des travaux — LotoLab IA
 
-**Période :** 14 juillet 2026 · **Branche :** `claude/lotolab-ia-fullstack-6lbsw9`
+**Période :** 14-15 juillet 2026 · **Branche :** `claude/lotolab-ia-fullstack-6lbsw9`
 **Point de départ :** MVP de 16 fichiers (audit détaillé dans `AUDIT_TECHNIQUE.md`)
 **Résultat :** monorepo complet prêt pour une bêta réelle.
+
+> 🌐 **Site déployé** : le projet Netlify `lotolabia` a été connecté au dépôt et le
+> build de la branche a réussi (statut `ready` confirmé côté Netlify) :
+> http://lotolabia.netlify.app — les pages tolèrent l'absence d'API tant qu'elle
+> n'est pas hébergée (voir §3, point 2) et s'affichent alors avec la mention
+> « données en cours de collecte ».
 
 ---
 
@@ -115,9 +121,9 @@
 | # | Élément | Où le renseigner |
 |---|---|---|
 | 1 | **URLs officielles des fichiers historiques de tirages** — à valider depuis un réseau non filtré (l'environnement de dev bloquait fdj.fr) | `COLLECTOR_HISTORY_URLS` (API) |
-| 2 | Hébergeur de l'API (Fly.io/Railway/Scaleway…) + variables d'env | `docs/DEPLOIEMENT.md` §1 |
-| 3 | Domaine définitif du site | `NEXT_PUBLIC_SITE_URL`, Netlify, Search Console |
-| 4 | Jeton + site Netlify pour la CI | secrets `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID(_PROD)` |
+| 2 | Hébergeur de l'API (Fly.io/Railway/Scaleway…) + variables d'env — **le site est déployé (http://lotolabia.netlify.app) mais n'a pas encore d'API à interroger** | `docs/DEPLOIEMENT.md` §1, puis `NEXT_PUBLIC_API_BASE_URL` sur Netlify |
+| 3 | Domaine définitif du site (actuellement `lotolabia.netlify.app`) | `NEXT_PUBLIC_SITE_URL`, Netlify → Domain settings, Search Console |
+| 4 | Jeton + site Netlify pour la CI automatisée (le déploiement initial a été fait manuellement via l'interface Netlify) | secrets `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID(_PROD)` |
 | 5 | Google Play Console (25 $ une fois) + keystore de signature | secrets `ANDROID_*` du workflow |
 | 6 | Compte Apple Developer (99 $/an) | build iOS/TestFlight |
 | 7 | Produits d'achat intégré dans les deux consoles + activation validation des reçus | `STORE_VALIDATION_ENABLED`, `GOOGLE_PLAY_*`, `APP_STORE_SHARED_SECRET` |
