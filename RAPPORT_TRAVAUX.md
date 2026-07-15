@@ -9,6 +9,15 @@
 > http://lotolabia.netlify.app — les pages tolèrent l'absence d'API tant qu'elle
 > n'est pas hébergée (voir §3, point 2) et s'affichent alors avec la mention
 > « données en cours de collecte ».
+>
+> 📊 **Base de données peuplée** : l'utilisateur a fourni 4 fichiers ZIP officiels
+> (`nouveau_loto.zip`, `loto2017.zip`, `loto_201902.zip`, `loto_201911.zip`).
+> Validés avec le parseur réel du projet (**0 ligne rejetée**), ils ont été
+> importés dans la table `draws` du projet Supabase `lotolab-ia` :
+> **2781 tirages officiels, du 06/10/2008 au 13/07/2026**, sans trou. L'import
+> est journalisé (`import_jobs` #1, `sync_logs`) comme le ferait le collecteur
+> automatique. Les fichiers sources n'ont pas été commités dans le dépôt (la
+> donnée officielle vit en base, pas dans git — conformément à l'audit).
 
 ---
 
@@ -120,7 +129,7 @@
 
 | # | Élément | Où le renseigner |
 |---|---|---|
-| 1 | **URLs officielles des fichiers historiques de tirages** — à valider depuis un réseau non filtré (l'environnement de dev bloquait fdj.fr) | `COLLECTOR_HISTORY_URLS` (API) |
+| 1 | **URLs officielles des fichiers historiques de tirages** — le format réel a été validé avec succès (4 fichiers officiels fournis, 0 rejet, historique 2008-2026 importé) ; il reste à identifier les URLs de téléchargement direct depuis un réseau non filtré (l'environnement de dev bloque fdj.fr) pour automatiser les futures synchronisations | `COLLECTOR_HISTORY_URLS` (API) |
 | 2 | Hébergeur de l'API (Fly.io/Railway/Scaleway…) + variables d'env — **le site est déployé (http://lotolabia.netlify.app) mais n'a pas encore d'API à interroger** | `docs/DEPLOIEMENT.md` §1, puis `NEXT_PUBLIC_API_BASE_URL` sur Netlify |
 | 3 | Domaine définitif du site (actuellement `lotolabia.netlify.app`) | `NEXT_PUBLIC_SITE_URL`, Netlify → Domain settings, Search Console |
 | 4 | Jeton + site Netlify pour la CI automatisée (le déploiement initial a été fait manuellement via l'interface Netlify) | secrets `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID(_PROD)` |
