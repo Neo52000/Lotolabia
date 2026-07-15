@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 210" role="img" aria-label="LotoLab IA">
+  <defs>
+    <linearGradient id="ball" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00B4FF"/>
+      <stop offset="1" stop-color="#9D4EDD"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(60,0)">
+    <circle cx="60" cy="60" r="54" fill="url(#ball)"/>
+    <ellipse cx="42" cy="34" rx="18" ry="10" fill="#FFFFFF" fill-opacity="0.28" transform="rotate(-24 42 34)"/>
+    <circle cx="60" cy="63" r="34" fill="#0D1B2A"/>
+    <rect x="44" y="66" width="8" height="16" rx="2" fill="#FFC107"/>
+    <rect x="56" y="56" width="8" height="26" rx="2" fill="#00B4FF"/>
+    <rect x="68" y="48" width="8" height="34" rx="2" fill="#22C55E"/>
+    <path d="M78 40l2.2 5 5 2.2-5 2.2-2.2 5-2.2-5-5-2.2 5-2.2z" fill="#FF4D8D"/>
+  </g>
+  <text x="120" y="160" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="800" fill="#FFFFFF">LotoLab <tspan fill="#00B4FF">IA</tspan></text>
+  <text x="120" y="188" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="500" fill="#FFFFFF" fill-opacity="0.78">Analysez. Comprenez. Jouez mieux.</text>
+</svg>

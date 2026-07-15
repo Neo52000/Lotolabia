@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" role="img" aria-label="Écran de démarrage LotoLab IA">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0D1B2A"/>
+      <stop offset="1" stop-color="#1B1B3A"/>
+    </linearGradient>
+    <linearGradient id="ball" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00B4FF"/>
+      <stop offset="1" stop-color="#9D4EDD"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <g transform="translate(340,600)">
+    <circle cx="200" cy="200" r="180" fill="url(#ball)"/>
+    <ellipse cx="140" cy="114" rx="60" ry="33" fill="#FFFFFF" fill-opacity="0.28" transform="rotate(-24 140 114)"/>
+    <circle cx="200" cy="210" r="113" fill="#0D1B2A"/>
+    <rect x="147" y="220" width="27" height="53" rx="7" fill="#FFC107"/>
+    <rect x="187" y="187" width="27" height="86" rx="7" fill="#00B4FF"/>
+    <rect x="227" y="160" width="27" height="113" rx="7" fill="#22C55E"/>
+    <path d="M260 133l7.3 16.6 16.6 7.3-16.6 7.3-7.3 16.6-7.3-16.6-16.6-7.3 16.6-7.3z" fill="#FF4D8D"/>
+  </g>
+  <text x="540" y="1130" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="88" font-weight="800" fill="#FFFFFF">LotoLab <tspan fill="#00B4FF">IA</tspan></text>
+  <text x="540" y="1200" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="500" fill="#FFFFFF" fill-opacity="0.75">Analysez. Comprenez. Jouez mieux.</text>
+  <text x="540" y="1800" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="#FFFFFF" fill-opacity="0.55">Outil indépendant d'analyse statistique — 18+</text>
+</svg>
