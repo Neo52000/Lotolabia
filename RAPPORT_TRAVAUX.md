@@ -18,6 +18,20 @@
 > est journalisé (`import_jobs` #1, `sync_logs`) comme le ferait le collecteur
 > automatique. Les fichiers sources n'ont pas été commités dans le dépôt (la
 > donnée officielle vit en base, pas dans git — conformément à l'audit).
+>
+> **Second lot importé** : l'utilisateur a fourni 4 ZIP supplémentaires
+> (`superloto_201907.zip`, `lotonoel2017.zip`, `grandloto_201912.zip`, `loto.zip`).
+> Les 3 premiers sont des tirages exceptionnels du Loto classique (Super Loto,
+> Loto de Noël, Grand Loto) au même format 5 numéros + Chance — validés avec le
+> parseur réel (**0 ligne rejetée**), soit **43 tirages uniques** intégrés
+> (`import_jobs` #2, `sync_logs`). `loto.zip` contient l'**ancien Loto d'avant la
+> réforme de 2008** (6 numéros + numéro complémentaire, dates compactées) : un jeu
+> différent que le schéma actuel ne modélise pas. Le parseur l'a **rejeté
+> automatiquement** (`FormatChangeError`), exactement comme prévu par la garde-fou
+> anti-données-incompatibles — **aucune ligne insérée, décision d'extension de
+> schéma laissée à l'utilisateur** (voir §3, point 1 bis).
+>
+> **Total actuel : 2824 tirages officiels, du 06/10/2008 au 13/07/2026.**
 
 ---
 
@@ -129,7 +143,8 @@
 
 | # | Élément | Où le renseigner |
 |---|---|---|
-| 1 | **URLs officielles des fichiers historiques de tirages** — le format réel a été validé avec succès (4 fichiers officiels fournis, 0 rejet, historique 2008-2026 importé) ; il reste à identifier les URLs de téléchargement direct depuis un réseau non filtré (l'environnement de dev bloque fdj.fr) pour automatiser les futures synchronisations | `COLLECTOR_HISTORY_URLS` (API) |
+| 1 | **URLs officielles des fichiers historiques de tirages** — le format réel a été validé avec succès (8 fichiers officiels fournis en 2 lots, 0 rejet sur les fichiers compatibles, historique 2008-2026 importé) ; il reste à identifier les URLs de téléchargement direct depuis un réseau non filtré (l'environnement de dev bloque fdj.fr) pour automatiser les futures synchronisations | `COLLECTOR_HISTORY_URLS` (API) |
+| 1 bis | **Décision requise — ancien format Loto (pré-2008)** : le fichier `loto.zip` fourni contient l'ancien Loto (6 numéros + complémentaire, avant la réforme de 2008), un jeu différent du Loto actuel (5 + Chance) que le schéma `draws` ne modélise pas. Le parseur l'a rejeté automatiquement (garde-fou anti-données-incompatibles), aucune donnée n'a été forcée en base. **Deux options** : (a) laisser ce fichier hors périmètre — l'app ne couvre que le Loto actuel, ce qui est cohérent avec son objet ; (b) étendre le schéma (nouveau `draw_type`, table ou colonnes dédiées à 6 numéros + complémentaire) et le parseur pour l'intégrer comme jeu historique distinct — travail non trivial (migration, stats, générateur à adapter). À trancher par vous. | Décision produit — pas d'action technique tant que non tranché |
 | 2 | Hébergeur de l'API (Fly.io/Railway/Scaleway…) + variables d'env — **le site est déployé (http://lotolabia.netlify.app) mais n'a pas encore d'API à interroger** | `docs/DEPLOIEMENT.md` §1, puis `NEXT_PUBLIC_API_BASE_URL` sur Netlify |
 | 3 | Domaine définitif du site (actuellement `lotolabia.netlify.app`) | `NEXT_PUBLIC_SITE_URL`, Netlify → Domain settings, Search Console |
 | 4 | Jeton + site Netlify pour la CI automatisée (le déploiement initial a été fait manuellement via l'interface Netlify) | secrets `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID(_PROD)` |
