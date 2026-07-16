@@ -20,6 +20,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/) ; versionn
 - **Mise en production Netlify** : variables `NEXT_PUBLIC_SITE_URL`,
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` configurées ;
   `backend/Dockerfile` + `backend/fly.toml.example` pour l'hébergement de l'API.
+- **Replis sans API hébergée** (`web/src/lib/`) : tirages bruts, fréquences,
+  retards, synthèse, générateur (aléatoire + fréquence) et simulation
+  Monte-Carlo fonctionnent désormais côté site web même sans backend
+  hébergé, via des ports fidèles et testés (27 tests) du moteur Python.
+  Le générateur/simulations affichent un bandeau indiquant le calcul local.
 
 ## [1.0.0-beta.1] — 2026-07-14
 

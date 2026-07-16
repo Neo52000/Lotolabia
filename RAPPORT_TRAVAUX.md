@@ -78,13 +78,27 @@
 > retards calculés directement depuis Supabase
 > (`web/src/lib/statsFallback.ts` — port fidèle et testé du moteur Python
 > `frequencies`/`delays`/`overview`, 8 tests dont une vérification croisée
-> avec les fixtures du moteur backend). Ce qui **reste** dépendant de l'API
-> hébergée (aucun repli possible sans dupliquer une logique métier plus
-> complexe/risquée) : le **générateur de grilles**, les **simulations**, les
+> avec les fixtures du moteur backend).
+>
+> **Générateur et simulations (site web) fonctionnent maintenant aussi sans
+> API** : `/generateur` (méthodes aléatoire + fréquence) et `/simulations`
+> (Monte-Carlo) basculent sur un calcul fait directement dans le navigateur
+> quand l'API ne répond pas (`web/src/lib/generatorFallback.ts`,
+> `monteCarloFallback.ts` — ports fidèles et testés de
+> `backend/app/generator/grids.py` et `montecarlo.py`, mêmes garanties :
+> avertissement systématique, vocabulaire proscrit jamais utilisé). Un
+> bandeau discret indique quand le calcul est local. 19 tests JS au total
+> pour l'ensemble de ces replis.
+>
+> Ce qui **reste** dépendant de l'API hébergée (logique trop complexe/risquée
+> à dupliquer sans divergence, ou nécessitant l'authentification/le compte) :
+> les **méthodes supplémentaires du générateur** (retard, équilibrages,
+> somme, diversification — exposées côté mobile uniquement), les
 > **paires/triplets/cooccurrences**, les **écarts min/moy/max**, les
-> **profils par numéro** (`/numero/[n]`) et tout le **Premium**. Ces
-> écrans continueront d'afficher « données en cours de collecte » /
-> « Failed to fetch » tant que l'API n'est pas hébergée — voir §3, point 2.
+> **profils par numéro** (`/numero/[n]`), la confrontation d'une grille à
+> l'historique, et tout le **Premium/compte**. Ces écrans continueront
+> d'afficher « données en cours de collecte » / « Failed to fetch » tant que
+> l'API n'est pas hébergée — voir §3, point 2.
 > Non vérifiable directement dans cet environnement de développement (accès
 > réseau à `*.supabase.co` également bloqué par le proxy sandbox, comme
 > fdj.fr et netlify.app), mais le code suit exactement le même schéma

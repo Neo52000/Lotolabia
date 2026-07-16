@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 
+import { generateGrids } from '@/lib/generatorFallback';
+import { supabaseAllDraws } from '@/lib/supabasePublic';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
 const METHODS = [
@@ -23,19 +26,17 @@ export default function GeneratorClient() {
   const [warning, setWarning] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [localFallback, setLocalFallback] = useState(false);
 
   async function generate() {
     setLoading(true);
     setError(null);
+    const parsedSeed = seed.trim() !== '' && Number.isInteger(Number(seed)) ? Number(seed) : null;
     try {
       const response = await fetch(`${API_BASE}/api/v1/generator`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method,
-          count: 1,
-          ...(seed.trim() !== '' && Number.isInteger(Number(seed)) ? { seed: Number(seed) } : {}),
-        }),
+        body: JSON.stringify({ method, count: 1, ...(parsedSeed !== null ? { seed: parsedSeed } : {}) }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -43,8 +44,18 @@ export default function GeneratorClient() {
       }
       setGrids(data.grids);
       setWarning(data.warning);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inattendue.');
+      setLocalFallback(false);
+    } catch {
+      // API indisponible (pas encore hébergée) : génération calculée localement.
+      try {
+        const draws = method === 'frequency' ? await supabaseAllDraws() : [];
+        const localGrids = generateGrids({ method: method as 'random' | 'frequency', seed: parsedSeed, draws });
+        setGrids(localGrids);
+        setWarning(localGrids[0]?.warning ?? '');
+        setLocalFallback(true);
+      } catch (fallbackErr) {
+        setError(fallbackErr instanceof Error ? fallbackErr.message : 'Erreur inattendue.');
+      }
     } finally {
       setLoading(false);
     }
@@ -87,6 +98,12 @@ export default function GeneratorClient() {
       </div>
 
       {error && <p className="rounded-lg bg-brand-pink/10 p-3 text-sm">{error}</p>}
+      {localFallback && grids.length > 0 && (
+        <p className="rounded-lg bg-brand-yellow/15 p-3 text-xs opacity-80">
+          Génération calculée directement dans votre navigateur (API indisponible pour le
+          moment) — même logique, mêmes garanties statistiques.
+        </p>
+      )}
 
       {grids.map((grid, index) => (
         <div key={index} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">

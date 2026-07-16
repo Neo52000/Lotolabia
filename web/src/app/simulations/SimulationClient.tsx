@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { simulateRandomPlay } from '@/lib/monteCarloFallback';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
 interface Distribution {
@@ -15,6 +17,7 @@ export default function SimulationClient() {
   const [result, setResult] = useState<{ iterations: number; distribution: Distribution[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localFallback, setLocalFallback] = useState(false);
 
   async function run() {
     setLoading(true);
@@ -24,8 +27,11 @@ export default function SimulationClient() {
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error?.message ?? 'Simulation indisponible.');
       setResult(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inattendue.');
+      setLocalFallback(false);
+    } catch {
+      // API indisponible (pas encore hébergée) : simulation calculée localement.
+      setResult(simulateRandomPlay(1000));
+      setLocalFallback(true);
     } finally {
       setLoading(false);
     }
@@ -47,6 +53,12 @@ export default function SimulationClient() {
         {loading ? 'Simulation…' : 'Lancer 1 000 grilles aléatoires'}
       </button>
       {error && <p className="rounded-lg bg-brand-pink/10 p-3 text-sm">{error}</p>}
+      {localFallback && result && (
+        <p className="rounded-lg bg-brand-yellow/15 p-3 text-xs opacity-80">
+          Simulation calculée directement dans votre navigateur (API indisponible pour le
+          moment) — même logique, mêmes garanties statistiques.
+        </p>
+      )}
       {result && (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
