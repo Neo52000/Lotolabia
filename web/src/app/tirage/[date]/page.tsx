@@ -64,13 +64,13 @@ export default async function DrawPage({ params }: Props) {
         <ul className="flex flex-wrap gap-2">
           {draw.numbers.map((n) => (
             <li key={n}>
-              <Link href={`/numero/${n}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:border-brand dark:border-slate-700">
+              <Link href={`/numero/${n}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:border-primary dark:border-slate-700">
                 Numéro {n} →
               </Link>
             </li>
           ))}
           <li>
-            <Link href={`/numero-chance/${draw.chance}`} className="rounded-lg border border-brand-pink/50 px-3 py-1.5 text-sm hover:border-brand-pink">
+            <Link href={`/numero-chance/${draw.chance}`} className="rounded-lg border border-accent/50 px-3 py-1.5 text-sm hover:border-accent">
               Chance {draw.chance} →
             </Link>
           </li>

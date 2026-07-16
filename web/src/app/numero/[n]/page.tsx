@@ -76,7 +76,7 @@ export default async function NumberPage({ params }: Props) {
               <ul className="flex flex-wrap gap-2 text-sm">
                 {profile.last_appearances.map((date) => (
                   <li key={date}>
-                    <Link href={`/tirage/${date}`} className="rounded-lg border border-slate-200 px-3 py-1 hover:border-brand dark:border-slate-700">
+                    <Link href={`/tirage/${date}`} className="rounded-lg border border-slate-200 px-3 py-1 hover:border-primary dark:border-slate-700">
                       {date}
                     </Link>
                   </li>
@@ -103,10 +103,10 @@ export default async function NumberPage({ params }: Props) {
           )}
           <nav className="flex justify-between text-sm">
             {n > 1 ? (
-              <Link href={`/numero/${n - 1}`} className="text-brand hover:underline">← Numéro {n - 1}</Link>
+              <Link href={`/numero/${n - 1}`} className="text-primary hover:underline">← Numéro {n - 1}</Link>
             ) : <span />}
             {n < 49 ? (
-              <Link href={`/numero/${n + 1}`} className="text-brand hover:underline">Numéro {n + 1} →</Link>
+              <Link href={`/numero/${n + 1}`} className="text-primary hover:underline">Numéro {n + 1} →</Link>
             ) : <span />}
           </nav>
         </>

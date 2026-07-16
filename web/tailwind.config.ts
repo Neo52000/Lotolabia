@@ -7,6 +7,9 @@ const config: Config = {
     extend: {
       colors: {
         night: '#0D1B2A',
+        primary: '#2B5CAD',
+        accent: '#B8863B',
+        confirm: '#3A9463',
         brand: '#00B4FF',
         'brand-violet': '#9D4EDD',
         'brand-pink': '#FF4D8D',
