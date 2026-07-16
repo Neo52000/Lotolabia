@@ -62,6 +62,23 @@ class Settings(BaseSettings):
     # --- Cache --------------------------------------------------------------
     cache_ttl_seconds: int = 300
 
+    # --- Production éditoriale automatique (blog SEO) ------------------------
+    # Rédaction template-based à partir des vraies statistiques (aucune clé
+    # externe requise). CONTENT_AI_ENABLED est un point d'extension optionnel
+    # pour brancher un modèle de langage de reformulation plus tard — désactivé
+    # par défaut, la production fonctionne sans lui.
+    content_scheduler_enabled: bool = False
+    content_batch_size: int = 2
+    content_auto_publish: bool = True
+    content_schedule_day_of_week: str = "mon"
+    content_schedule_hour: int = 6
+    content_schedule_minute: int = 0
+    content_ai_enabled: bool = False
+    content_ai_provider: str = ""
+    content_ai_api_key: str = Field(
+        default="", description="Clé API du modèle de reformulation optionnel — jamais journalisée"
+    )
+
     # --- Achats intégrés (stores) ---------------------------------------------
     # La validation des reçus reste désactivée tant que les identifiants des
     # consoles (Google Play / App Store) ne sont pas configurés.

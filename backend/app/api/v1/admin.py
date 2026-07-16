@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
 from pydantic import BaseModel, Field, field_validator
 
 from ...collector.service import ALLOWED_UPLOAD_EXTENSIONS, CollectorService
+from ...content.service import ContentGenerationService
 from ...core.config import Settings, get_settings
 from ...core.errors import AppError, NotFoundError
 from ...core.security import AuthUser, require_admin
@@ -331,6 +332,34 @@ async def delete_seo(
 ) -> None:
     await _audit(repository, admin, "seo_delete", "seo_content", slug)
     await repository.delete_seo_content(slug)
+
+
+# ------------------------------------------------------------------ production éditoriale (blog SEO)
+def get_content_service(request: Request) -> ContentGenerationService:
+    return request.app.state.content_service
+
+
+@router.get("/content/backlog")
+async def content_backlog(
+    content_service: ContentGenerationService = Depends(get_content_service),
+) -> list[dict]:
+    """Prochains sujets que le planificateur produira, dans l'ordre de priorité."""
+    return await content_service.backlog_preview()
+
+
+@router.post("/content/generate")
+async def content_generate(
+    admin: AuthUser = Depends(require_admin),
+    repository: Repository = Depends(get_repository),
+    content_service: ContentGenerationService = Depends(get_content_service),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Bouton « Générer maintenant » du back-office."""
+    await _audit(repository, admin, "content_generate_now")
+    published = await content_service.run_batch(
+        max_new=settings.content_batch_size, actor_email=admin.email or "admin"
+    )
+    return {"published": published}
 
 
 class AdPlacementUpsert(BaseModel):

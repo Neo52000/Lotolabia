@@ -14,6 +14,13 @@ interface SeoContent {
   updated_at: string;
 }
 
+interface BacklogTopic {
+  slug: string;
+  kind: string;
+  title: string;
+  refresh: boolean;
+}
+
 const EMPTY: SeoContent = {
   slug: '',
   title: '',
@@ -23,11 +30,42 @@ const EMPTY: SeoContent = {
   updated_at: '',
 };
 
+const KIND_LABELS: Record<string, string> = {
+  evergreen: 'Pédagogique',
+  monthly_recap: 'Bilan mensuel',
+  yearly_recap: 'Bilan annuel',
+  rolling_top: 'Palmarès glissant',
+};
+
 export default function AdminSeoPage() {
   const { data, error, loading, reload } = useAdminData<SeoContent[]>('/api/v1/admin/seo');
+  const backlog = useAdminData<BacklogTopic[]>('/api/v1/admin/content/backlog');
   const [editing, setEditing] = useState<SeoContent>(EMPTY);
   const [message, setMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  async function generateNow() {
+    setGenerating(true);
+    setMessage(null);
+    setActionError(null);
+    try {
+      const result = await adminFetch<{ published: string[] }>('/api/v1/admin/content/generate', {
+        method: 'POST',
+      });
+      setMessage(
+        result.published.length > 0
+          ? `${result.published.length} article(s) publié(s)/rafraîchi(s) : ${result.published.join(', ')}.`
+          : 'Aucun nouvel article à produire pour le moment (backlog épuisé, en attente de nouvelles données).',
+      );
+      await reload();
+      await backlog.reload();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Erreur inattendue');
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -64,12 +102,45 @@ export default function AdminSeoPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-bold">Contenus SEO / Blog</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold">Contenus SEO / Blog</h1>
+        <button
+          onClick={generateNow}
+          disabled={generating}
+          className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-night disabled:opacity-50"
+        >
+          {generating ? 'Génération…' : 'Générer maintenant'}
+        </button>
+      </div>
       <p className="mb-4 max-w-3xl text-sm opacity-80">
-        Les contenus publiés apparaissent sur le site public (/blog/slug). Rédigez des pages
-        riches et utiles — jamais de pages pauvres générées en masse.
+        Les contenus publiés apparaissent sur le site public (/blog/slug). En plus de
+        l&apos;édition manuelle ci-dessous, un service planifié produit régulièrement de
+        nouveaux articles à partir des vraies statistiques (jamais de donnée inventée,
+        vocabulaire proscrit bloqué automatiquement — voir docs/SEO.md).
       </p>
       <AdminMessage error={error ?? actionError} info={message} />
+
+      <AdminCard title={`Prochains sujets à produire (${backlog.data?.length ?? 0})`}>
+        {backlog.data && backlog.data.length > 0 ? (
+          <ul className="space-y-2 text-sm">
+            {backlog.data.map((topic) => (
+              <li key={topic.slug} className="flex flex-wrap items-center gap-3">
+                <StatusBadge status={topic.refresh ? 'pending' : 'success'} />
+                <span className="text-xs opacity-60">
+                  {KIND_LABELS[topic.kind] ?? topic.kind}
+                </span>
+                <span className="font-mono text-xs">{topic.slug}</span>
+                <span className="flex-1">{topic.title}</span>
+                {topic.refresh && <span className="text-xs opacity-60">rafraîchi à chaque exécution</span>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm opacity-70">
+            {backlog.loading ? 'Chargement…' : 'Backlog vide pour le moment.'}
+          </p>
+        )}
+      </AdminCard>
 
       <AdminCard title={editing.slug ? `Édition : ${editing.slug}` : 'Nouveau contenu'}>
         <form onSubmit={save} className="space-y-3 text-sm">

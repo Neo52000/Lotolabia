@@ -12,6 +12,8 @@ from slowapi.util import get_remote_address
 from .api.v1 import router as api_v1_router
 from .collector.scheduler import SyncScheduler
 from .collector.service import CollectorService
+from .content.scheduler import ContentScheduler
+from .content.service import ContentGenerationService
 from .core.cache import TTLCache
 from .core.config import get_settings
 from .core.errors import register_error_handlers
@@ -48,10 +50,18 @@ async def lifespan(app: FastAPI):
         app.state.scheduler = SyncScheduler(app.state.collector, settings)
         app.state.scheduler.start()
 
+    app.state.content_service = ContentGenerationService(app.state.repository, settings)
+    app.state.content_scheduler = None
+    if settings.content_scheduler_enabled:
+        app.state.content_scheduler = ContentScheduler(app.state.content_service, settings)
+        app.state.content_scheduler.start()
+
     yield
 
     if app.state.scheduler is not None:
         app.state.scheduler.shutdown()
+    if app.state.content_scheduler is not None:
+        app.state.content_scheduler.shutdown()
     aclose = getattr(app.state.repository, "aclose", None)
     if aclose is not None:
         await aclose()

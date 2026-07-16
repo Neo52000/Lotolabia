@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs, Disclaimer } from '@/components/ui';
+import { SITE_URL } from '@/lib/api';
 
 export const revalidate = 3600;
 
@@ -12,6 +13,7 @@ interface Content {
   title: string;
   meta_description: string | null;
   body_md: string;
+  created_at: string;
   updated_at: string;
 }
 
@@ -70,8 +72,22 @@ export default async function BlogArticlePage({ params }: Props) {
   const content = await fetchContent(params.slug);
   if (!content) notFound();
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: content.title,
+    description: content.meta_description ?? undefined,
+    url: `${SITE_URL}/blog/${content.slug}`,
+    datePublished: content.created_at,
+    dateModified: content.updated_at,
+    author: { '@type': 'Organization', name: 'LotoLab IA' },
+    publisher: { '@type': 'Organization', name: 'LotoLab IA' },
+    mainEntityOfPage: `${SITE_URL}/blog/${content.slug}`,
+  };
+
   return (
     <article className="space-y-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Breadcrumbs items={[{ label: 'Blog', href: '/blog' }, { label: content.title }]} />
       <h1 className="text-2xl font-bold">{content.title}</h1>
       <p className="text-xs opacity-60">

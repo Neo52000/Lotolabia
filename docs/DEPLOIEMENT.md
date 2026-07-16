@@ -19,7 +19,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 Variables d'environnement requises (voir `backend/.env.example`) :
 `ENVIRONMENT=production`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
 `SUPABASE_JWT_SECRET` **ou** `SUPABASE_JWKS_URL`, `CORS_ORIGINS=https://<domaine>`,
-`COLLECTOR_HISTORY_URLS`, `SCHEDULER_ENABLED=true` (sur **une seule** instance),
+`COLLECTOR_HISTORY_URLS`, `SCHEDULER_ENABLED=true` et `CONTENT_SCHEDULER_ENABLED=true`
+(chacun sur **une seule** instance),
 `RATE_LIMIT_DEFAULT`.
 
 Le `Dockerfile` est fourni dans `backend/Dockerfile` (image `python:3.11-slim`,

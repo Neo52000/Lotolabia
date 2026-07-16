@@ -2,6 +2,25 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/) ; versionnage SemVer.
 
+## [Non publié]
+
+### Ajouté
+- **Production éditoriale automatique** (`backend/app/content/`) : service qui
+  produit régulièrement de nouveaux articles de blog à partir des vraies
+  statistiques (`app/stats/engine.py`) — aucune donnée inventée. Sujets évergreen
+  pédagogiques rédigés une fois, bilans mensuels/annuels générés dès qu'une
+  période complète est disponible, palmarès glissant rafraîchi à chaque
+  exécution. Vocabulaire proscrit bloqué automatiquement
+  (`writer.assert_compliant`), avertissement obligatoire systématique.
+  Planificateur hebdomadaire (`CONTENT_SCHEDULER_ENABLED`), déclenchement manuel
+  depuis `/admin/seo` (« Générer maintenant »), point d'extension optionnel pour
+  un modèle de langage de reformulation (désactivé par défaut). 11 nouveaux
+  tests (`tests/test_content.py`).
+- **SEO blog** : structured data `BlogPosting` (JSON-LD) sur les pages d'article.
+- **Mise en production Netlify** : variables `NEXT_PUBLIC_SITE_URL`,
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` configurées ;
+  `backend/Dockerfile` + `backend/fly.toml.example` pour l'hébergement de l'API.
+
 ## [1.0.0-beta.1] — 2026-07-14
 
 Refonte complète du MVP en produit prêt pour une bêta réelle.

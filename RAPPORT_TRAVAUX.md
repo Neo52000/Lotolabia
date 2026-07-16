@@ -55,6 +55,22 @@
 > automatiquement par le même garde-fou `FormatChangeError`, aucune donnée forcée.
 >
 > **Total actuel : 2851 tirages officiels, du 06/10/2008 au 13/07/2026.**
+>
+> 👤 **Premier compte administrateur créé** : `reine.elie@gmail.com` a été
+> promu `role='admin'` dans `public.profiles`. Connexion possible sur
+> `https://lotolabia.netlify.app/admin`.
+>
+> 📝 **Production éditoriale automatique du blog** : nouveau service
+> (`backend/app/content/`) qui génère régulièrement des articles à partir des
+> vraies statistiques — jamais de donnée inventée. Sujets pédagogiques
+> évergreen (loi des grands nombres, biais du joueur, Monte-Carlo, jeu
+> responsable...), bilans mensuels/annuels générés dès qu'une période de
+> tirages réels est complète, palmarès glissant rafraîchi à chaque exécution.
+> Vocabulaire proscrit bloqué automatiquement avant toute publication.
+> Planificateur hebdomadaire (désactivé par défaut, `CONTENT_SCHEDULER_ENABLED=true`
+> à activer sur l'instance API de production), bouton « Générer maintenant »
+> dans `/admin/seo`. JSON-LD `BlogPosting` ajouté aux pages d'article. 11
+> nouveaux tests (86/86 verts). Voir `docs/SEO.md` pour le détail.
 
 ---
 
