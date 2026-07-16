@@ -28,7 +28,7 @@ export function DrawBalls({ draw, size = 'md' }: { draw: Draw; size?: 'sm' | 'md
 
 export function Disclaimer() {
   return (
-    <p className="rounded-xl border border-accent/40 bg-accent/10 p-4 text-sm">
+    <p className="rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
       ⚠️ {DISCLAIMER}
     </p>
   );
