@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { Breadcrumbs, Disclaimer } from '@/components/ui';
 import { SITE_URL } from '@/lib/api';
+import { supabaseContentBySlug } from '@/lib/supabasePublic';
 
 export const revalidate = 3600;
 
@@ -23,11 +24,11 @@ async function fetchContent(slug: string): Promise<Content | null> {
     const response = await fetch(`${API_BASE}/api/v1/content/${slug}`, {
       next: { revalidate: 3600 },
     });
-    if (!response.ok) return null;
-    return (await response.json()) as Content;
+    if (response.ok) return (await response.json()) as Content;
   } catch {
-    return null;
+    // API indisponible — repli ci-dessous.
   }
+  return supabaseContentBySlug(slug);
 }
 
 interface Props {

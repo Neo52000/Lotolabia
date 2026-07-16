@@ -21,10 +21,14 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/) ; versionn
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` configurées ;
   `backend/Dockerfile` + `backend/fly.toml.example` pour l'hébergement de l'API.
 - **Replis sans API hébergée** (`web/src/lib/`) : tirages bruts, fréquences,
-  retards, synthèse, générateur (aléatoire + fréquence) et simulation
-  Monte-Carlo fonctionnent désormais côté site web même sans backend
-  hébergé, via des ports fidèles et testés (27 tests) du moteur Python.
-  Le générateur/simulations affichent un bandeau indiquant le calcul local.
+  retards, synthèse, générateur (aléatoire + fréquence), simulation
+  Monte-Carlo et contenus de blog fonctionnent désormais côté site web même
+  sans backend hébergé, via des ports fidèles et testés (27 tests) du moteur
+  Python. Le générateur/simulations affichent un bandeau indiquant le calcul
+  local.
+- **Blog amorcé** : les 10 articles évergreen de la production éditoriale
+  automatique ont été publiés directement dans `seo_contents` (le pipeline
+  n'ayant jamais pu s'exécuter sans API hébergée), tracé dans `audit_log`.
 
 ## [1.0.0-beta.1] — 2026-07-14
 

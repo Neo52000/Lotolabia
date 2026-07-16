@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { Breadcrumbs, Section } from '@/components/ui';
+import { supabasePublishedContents } from '@/lib/supabasePublic';
 
 export const revalidate = 3600;
 
@@ -25,11 +26,14 @@ interface ContentItem {
 async function fetchContents(): Promise<ContentItem[]> {
   try {
     const response = await fetch(`${API_BASE}/api/v1/content`, { next: { revalidate: 3600 } });
-    if (!response.ok) return [];
-    return (await response.json()) as ContentItem[];
+    if (response.ok) {
+      const data = (await response.json()) as ContentItem[];
+      if (data.length > 0) return data;
+    }
   } catch {
-    return [];
+    // API indisponible — repli ci-dessous.
   }
+  return supabasePublishedContents();
 }
 
 export default async function BlogPage() {

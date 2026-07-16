@@ -105,6 +105,38 @@ export async function supabaseAllDraws(): Promise<Draw[]> {
   return all;
 }
 
+export interface SeoContent {
+  slug: string;
+  title: string;
+  meta_description: string | null;
+  body_md: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function supabasePublishedContents(): Promise<SeoContent[]> {
+  if (!supabasePublicConfigured) return [];
+  const { data, error } = await getClient()
+    .from('seo_contents')
+    .select('slug, title, meta_description, body_md, created_at, updated_at')
+    .eq('published', true)
+    .order('slug', { ascending: true });
+  if (error || !data) return [];
+  return data as SeoContent[];
+}
+
+export async function supabaseContentBySlug(slug: string): Promise<SeoContent | null> {
+  if (!supabasePublicConfigured) return null;
+  const { data, error } = await getClient()
+    .from('seo_contents')
+    .select('slug, title, meta_description, body_md, created_at, updated_at')
+    .eq('slug', slug)
+    .eq('published', true)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as SeoContent;
+}
+
 export async function supabaseDrawByDate(date: string): Promise<Draw | null> {
   if (!supabasePublicConfigured) return null;
   const { data, error } = await getClient()

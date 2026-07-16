@@ -103,6 +103,21 @@
 > réseau à `*.supabase.co` également bloqué par le proxy sandbox, comme
 > fdj.fr et netlify.app), mais le code suit exactement le même schéma
 > `supabase-js` + clé anon déjà utilisé et fonctionnel pour `/admin`.
+>
+> 📰 **Blog amorcé** : il était vide car le pipeline de production
+> éditoriale (§ ci-dessus) tourne *dans l'API*, jamais encore exécutée
+> (ni cron, ni bouton « Générer maintenant » actionnés) puisqu'elle n'est
+> pas hébergée — la table `seo_contents` était donc réellement vide, pas un
+> bug d'affichage. Les **10 articles évergreen ont été publiés directement**
+> (contenu strictement identique à celui que le service aurait produit,
+> tracé dans `audit_log`). **Correctif de fond** : `/blog` et `/blog/[slug]`
+> ne dépendaient que de l'API pour lire les contenus déjà publiés — ajout
+> d'un repli Supabase (`supabasePublishedContents`/`supabaseContentBySlug`)
+> comme pour le reste du site, pour que les futurs articles générés
+> (bilans mensuels/annuels, palmarès) s'affichent aussi sans API hébergée.
+> Les bilans mensuels/annuels et le palmarès glissant nécessitent en
+> revanche l'API pour être *produits* (bouton « Générer maintenant » ou
+> cron) — une fois publiés, ils s'afficheront sans elle.
 
 ---
 
