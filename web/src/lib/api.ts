@@ -8,15 +8,18 @@
  * Repli si l'API FastAPI n'est pas joignable :
  *  - `latestDraw`, `draws`, `drawByDate` retombent sur une lecture directe de
  *    Supabase (RLS publique en lecture sur `draws`) — voir `supabasePublic.ts` ;
- *  - `overview`, `frequencies`, `delays` retombent sur un calcul local fidèle
- *    au moteur statistique Python — voir `statsFallback.ts`.
- * Le générateur, les simulations, les paires/triplets/cooccurrences et les
- * écarts restent servis exclusivement par l'API : cette logique n'est pas
- * dupliquée côté client pour éviter toute divergence.
+ *  - `overview`, `frequencies`, `delays`, `numberProfile` retombent sur un
+ *    calcul local fidèle au moteur statistique Python — voir
+ *    `statsFallback.ts` et `numberProfileFallback.ts`.
+ * Le générateur (méthodes random/frequency), les simulations, les
+ * paires/triplets et les écarts min/moy/max restent servis exclusivement par
+ * l'API : cette logique n'est pas dupliquée côté client pour éviter toute
+ * divergence.
  */
 
 import { supabaseAllDraws, supabaseDraws, supabaseDrawByDate, supabaseLatestDraw } from './supabasePublic';
 import { applyWindow, computeDelays, computeFrequencies, computeOverview } from './statsFallback';
+import { computeNumberProfile } from './numberProfileFallback';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -108,8 +111,19 @@ export const api = {
   shapes: () => get<Record<string, unknown>>('/api/v1/stats/shapes'),
   periods: (granularity: 'year' | 'month' = 'year') =>
     get<Record<string, unknown>>(`/api/v1/stats/periods?granularity=${granularity}`),
-  numberProfile: (n: number, isChance = false) =>
-    get<Record<string, unknown>>(`/api/v1/stats/numbers/${n}?is_chance=${isChance}`),
+  numberProfile: async (n: number, isChance = false) => {
+    const fromApi = await get<Record<string, unknown>>(
+      `/api/v1/stats/numbers/${n}?is_chance=${isChance}`,
+    );
+    if (fromApi) return fromApi;
+    const draws = await supabaseAllDraws();
+    if (draws.length === 0) return null;
+    try {
+      return computeNumberProfile(draws, n, isChance, DISCLAIMER) as unknown as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  },
 };
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
