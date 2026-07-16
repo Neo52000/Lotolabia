@@ -4,7 +4,15 @@
  * Toutes les fonctions tolèrent l'indisponibilité de l'API (retour null) :
  * les pages affichent alors un état « données en cours de collecte » et se
  * marquent noindex pour éviter d'indexer des pages vides.
+ *
+ * Repli tirages bruts : si l'API FastAPI n'est pas joignable, `latestDraw`,
+ * `draws` et `drawByDate` retombent sur une lecture directe de Supabase
+ * (RLS publique en lecture sur `draws`) — voir `supabasePublic.ts`. Les
+ * statistiques calculées (fréquences, retards...) restent servies
+ * exclusivement par l'API, qui seule porte le moteur statistique.
  */
+
+import { supabaseDraws, supabaseDrawByDate, supabaseLatestDraw } from './supabasePublic';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -57,14 +65,15 @@ export interface StatsPayload {
 }
 
 export const api = {
-  latestDraw: () => get<Draw>('/api/v1/draws/latest'),
-  draws: (page = 1, pageSize = 20, year?: number, month?: number) => {
+  latestDraw: async () => (await get<Draw>('/api/v1/draws/latest')) ?? supabaseLatestDraw(),
+  draws: async (page = 1, pageSize = 20, year?: number, month?: number) => {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     if (year) params.set('year', String(year));
     if (month) params.set('month', String(month));
-    return get<DrawPage>(`/api/v1/draws?${params.toString()}`);
+    const fromApi = await get<DrawPage>(`/api/v1/draws?${params.toString()}`);
+    return fromApi ?? supabaseDraws(page, pageSize, year, month);
   },
-  drawByDate: (date: string) => get<Draw>(`/api/v1/draws/${date}`),
+  drawByDate: async (date: string) => (await get<Draw>(`/api/v1/draws/${date}`)) ?? supabaseDrawByDate(date),
   overview: () => get<Record<string, unknown>>('/api/v1/stats/overview'),
   frequencies: (window?: number) =>
     get<StatsPayload>(`/api/v1/stats/frequencies${window ? `?window=${window}` : ''}`),

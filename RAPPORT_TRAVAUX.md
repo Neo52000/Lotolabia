@@ -71,6 +71,19 @@
 > à activer sur l'instance API de production), bouton « Générer maintenant »
 > dans `/admin/seo`. JSON-LD `BlogPosting` ajouté aux pages d'article. 11
 > nouveaux tests (86/86 verts). Voir `docs/SEO.md` pour le détail.
+>
+> 🔌 **Repli tirages bruts sans API hébergée** : `/resultats`, `/historique`
+> et `/tirage/[date]` lisent maintenant les tirages directement depuis
+> Supabase (`web/src/lib/supabasePublic.ts`, clé `anon` publique protégée par
+> RLS) quand l'API FastAPI n'est pas joignable — ces pages affichent donc les
+> **2851 vrais tirages** dès maintenant, sans attendre l'hébergement de
+> l'API. Les statistiques calculées (fréquences, retards, générateur...)
+> restent servies exclusivement par l'API et continuent d'afficher « données
+> en cours de collecte » tant qu'elle n'est pas hébergée — voir §3, point 2.
+> Non vérifiable directement dans cet environnement de développement (accès
+> réseau à `*.supabase.co` également bloqué par le proxy sandbox, comme
+> fdj.fr et netlify.app), mais le code suit exactement le même schéma
+> `supabase-js` + clé anon déjà utilisé et fonctionnel pour `/admin`.
 
 ---
 
