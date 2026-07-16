@@ -29,6 +29,21 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/) ; versionn
 - **Blog amorcé** : les 10 articles évergreen de la production éditoriale
   automatique ont été publiés directement dans `seo_contents` (le pipeline
   n'ayant jamais pu s'exécuter sans API hébergée), tracé dans `audit_log`.
+- **Repli `/numero/[n]` et `/numero-chance/[n]`** : profil complet par numéro
+  (fréquence, retard, écarts, dernières sorties, numéros compagnons) calculé
+  côté navigateur sans API hébergée (`web/src/lib/numberProfileFallback.ts`,
+  port fidèle et testé de `number_profile`/`number_cooccurrences`).
+- **+10 articles évergreen** (dizaines, paires/cooccurrences, numéros
+  consécutifs, équilibrages, contrôle de somme, médiane/dispersion, histoire
+  du Loto/réforme 2008, tirage équiprobable, glossaire, espérance de gain) —
+  20 articles publiés au total.
+- **Générateur web complet** : 4 méthodes supplémentaires (retard,
+  équilibrage, contrôle de somme, diversification), sélecteur du nombre de
+  grilles (1-5), repli JS fidèle et testé pour les 6 méthodes
+  (`generatorFallback.ts`).
+- **États de chargement** : `SkeletonSection`/`SkeletonBarList`
+  (`web/src/components/ui.tsx`), `loading.tsx` sur les routes qui dépendent
+  d'un fetch lent, squelettes dans le générateur et les simulations.
 
 ## [1.0.0-beta.1] — 2026-07-14
 

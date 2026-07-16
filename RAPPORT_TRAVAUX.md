@@ -118,6 +118,30 @@
 > Les bilans mensuels/annuels et le palmarès glissant nécessitent en
 > revanche l'API pour être *produits* (bouton « Générer maintenant » ou
 > cron) — une fois publiés, ils s'afficheront sans elle.
+>
+> ✨ **Quatre améliorations post-lancement** (suite à une demande de
+> priorisation contenu/fonctionnalités/UX) :
+> 1. **Repli `/numero/[n]` et `/numero-chance/[n]`** — ces 59 pages
+>    affichent maintenant un vrai profil (fréquence, retard, écarts,
+>    dernières sorties, numéros compagnons) même sans API hébergée
+>    (`web/src/lib/numberProfileFallback.ts`, port fidèle et testé de
+>    `number_profile`/`number_cooccurrences`).
+> 2. **+10 articles évergreen** (dizaines, paires/cooccurrences, numéros
+>    consécutifs, équilibrages, contrôle de somme, médiane/dispersion,
+>    histoire du Loto/réforme 2008, tirage équiprobable, glossaire,
+>    espérance de gain) — le blog compte désormais **20 articles publiés**.
+> 3. **Générateur web complet** : les 4 méthodes manquantes (retard,
+>    équilibrage, contrôle de somme, diversification) sont maintenant
+>    disponibles sur le site, avec repli JS fidèle et testé si l'API n'est
+>    pas hébergée (`generatorFallback.ts`), plus un sélecteur du nombre de
+>    grilles (1-5) pour que la diversification ait un sens.
+> 4. **États de chargement** : squelettes visuels (`SkeletonSection`/
+>    `SkeletonBarList`) au lieu du texte brut, sur l'accueil, les pages
+>    statistiques, résultats, historique, fiches numéro, blog et les deux
+>    outils client (générateur, simulations).
+>
+> 32 tests JS (contre 19 précédemment), tous verts ; 86 tests backend
+> inchangés (verts) ; build web 90 pages sans erreur.
 
 ---
 

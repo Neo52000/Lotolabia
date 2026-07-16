@@ -84,6 +84,34 @@ export function BarList({
   );
 }
 
+/** Squelette de `Section` pendant le chargement (streaming Suspense via `loading.tsx`). */
+export function SkeletonSection({ lines = 4 }: { lines?: number }) {
+  return (
+    <section
+      className="animate-pulse rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      aria-hidden="true"
+    >
+      <div className="mb-4 h-4 w-40 rounded bg-slate-200 dark:bg-slate-800" />
+      <SkeletonBarList lines={lines} />
+    </section>
+  );
+}
+
+/** Squelette de `BarList` — mêmes proportions pour éviter tout saut visuel à l'arrivée des données. */
+export function SkeletonBarList({ lines = 5 }: { lines?: number }) {
+  return (
+    <ul className="animate-pulse space-y-1.5" aria-hidden="true">
+      {Array.from({ length: lines }).map((_, index) => (
+        <li key={index} className="flex items-center gap-3">
+          <span className="h-4 w-10 shrink-0 rounded bg-slate-200 dark:bg-slate-800" />
+          <span className="h-2.5 flex-1 rounded-full bg-slate-100 dark:bg-slate-800" />
+          <span className="h-4 w-16 shrink-0 rounded bg-slate-200 dark:bg-slate-800" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function DrawFacts({ numbers }: { numbers: number[] }) {
   const sum = numbers.reduce((a, b) => a + b, 0);
   const even = numbers.filter((n) => n % 2 === 0).length;

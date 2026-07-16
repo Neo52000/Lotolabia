@@ -59,7 +59,14 @@ export default function SimulationClient() {
           moment) — même logique, mêmes garanties statistiques.
         </p>
       )}
-      {result && (
+      {loading && (
+        <div className="animate-pulse space-y-1.5" aria-hidden="true">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="h-6 rounded bg-slate-200 dark:bg-slate-800" />
+          ))}
+        </div>
+      )}
+      {!loading && result && (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
