@@ -82,6 +82,29 @@ export async function supabaseDraws(
   };
 }
 
+/**
+ * Tous les tirages, triés par date croissante (nécessaire pour reproduire
+ * fidèlement les calculs de `statsFallback.ts`, qui suppose cet ordre).
+ * Pagine par blocs de 1000 lignes (limite par défaut de PostgREST) pour
+ * couvrir l'historique complet quel que soit son volume.
+ */
+export async function supabaseAllDraws(): Promise<Draw[]> {
+  if (!supabasePublicConfigured) return [];
+  const pageSize = 1000;
+  const all: Draw[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await getClient()
+      .from('draws')
+      .select('id, draw_date, numbers, chance, source')
+      .order('draw_date', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error || !data || data.length === 0) break;
+    all.push(...(data as DrawRow[]).map(toDraw));
+    if (data.length < pageSize) break;
+  }
+  return all;
+}
+
 export async function supabaseDrawByDate(date: string): Promise<Draw | null> {
   if (!supabasePublicConfigured) return null;
   const { data, error } = await getClient()

@@ -72,14 +72,19 @@
 > dans `/admin/seo`. JSON-LD `BlogPosting` ajouté aux pages d'article. 11
 > nouveaux tests (86/86 verts). Voir `docs/SEO.md` pour le détail.
 >
-> 🔌 **Repli tirages bruts sans API hébergée** : `/resultats`, `/historique`
-> et `/tirage/[date]` lisent maintenant les tirages directement depuis
-> Supabase (`web/src/lib/supabasePublic.ts`, clé `anon` publique protégée par
-> RLS) quand l'API FastAPI n'est pas joignable — ces pages affichent donc les
-> **2851 vrais tirages** dès maintenant, sans attendre l'hébergement de
-> l'API. Les statistiques calculées (fréquences, retards, générateur...)
-> restent servies exclusivement par l'API et continuent d'afficher « données
-> en cours de collecte » tant qu'elle n'est pas hébergée — voir §3, point 2.
+> 🔌 **Repli sans API hébergée** : en plus des tirages bruts (`/resultats`,
+> `/historique`, `/tirage/[date]`), **l'accueil, `/statistiques` et
+> `/frequences`/`/retards`** affichent maintenant de vraies fréquences et
+> retards calculés directement depuis Supabase
+> (`web/src/lib/statsFallback.ts` — port fidèle et testé du moteur Python
+> `frequencies`/`delays`/`overview`, 8 tests dont une vérification croisée
+> avec les fixtures du moteur backend). Ce qui **reste** dépendant de l'API
+> hébergée (aucun repli possible sans dupliquer une logique métier plus
+> complexe/risquée) : le **générateur de grilles**, les **simulations**, les
+> **paires/triplets/cooccurrences**, les **écarts min/moy/max**, les
+> **profils par numéro** (`/numero/[n]`) et tout le **Premium**. Ces
+> écrans continueront d'afficher « données en cours de collecte » /
+> « Failed to fetch » tant que l'API n'est pas hébergée — voir §3, point 2.
 > Non vérifiable directement dans cet environnement de développement (accès
 > réseau à `*.supabase.co` également bloqué par le proxy sandbox, comme
 > fdj.fr et netlify.app), mais le code suit exactement le même schéma

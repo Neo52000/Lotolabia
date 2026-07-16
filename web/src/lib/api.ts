@@ -5,18 +5,27 @@
  * les pages affichent alors un état « données en cours de collecte » et se
  * marquent noindex pour éviter d'indexer des pages vides.
  *
- * Repli tirages bruts : si l'API FastAPI n'est pas joignable, `latestDraw`,
- * `draws` et `drawByDate` retombent sur une lecture directe de Supabase
- * (RLS publique en lecture sur `draws`) — voir `supabasePublic.ts`. Les
- * statistiques calculées (fréquences, retards...) restent servies
- * exclusivement par l'API, qui seule porte le moteur statistique.
+ * Repli si l'API FastAPI n'est pas joignable :
+ *  - `latestDraw`, `draws`, `drawByDate` retombent sur une lecture directe de
+ *    Supabase (RLS publique en lecture sur `draws`) — voir `supabasePublic.ts` ;
+ *  - `overview`, `frequencies`, `delays` retombent sur un calcul local fidèle
+ *    au moteur statistique Python — voir `statsFallback.ts`.
+ * Le générateur, les simulations, les paires/triplets/cooccurrences et les
+ * écarts restent servis exclusivement par l'API : cette logique n'est pas
+ * dupliquée côté client pour éviter toute divergence.
  */
 
-import { supabaseDraws, supabaseDrawByDate, supabaseLatestDraw } from './supabasePublic';
+import { supabaseAllDraws, supabaseDraws, supabaseDrawByDate, supabaseLatestDraw } from './supabasePublic';
+import { applyWindow, computeDelays, computeFrequencies, computeOverview } from './statsFallback';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
 export const REVALIDATE_SECONDS = 3600;
+
+export const DISCLAIMER =
+  'Les tirages sont aléatoires. Les statistiques passées ne permettent pas de prévoir ' +
+  'avec certitude les résultats futurs. Toute grille valide conserve la même probabilité ' +
+  'théorique de gain.';
 
 async function get<T>(path: string): Promise<T | null> {
   try {
@@ -74,11 +83,26 @@ export const api = {
     return fromApi ?? supabaseDraws(page, pageSize, year, month);
   },
   drawByDate: async (date: string) => (await get<Draw>(`/api/v1/draws/${date}`)) ?? supabaseDrawByDate(date),
-  overview: () => get<Record<string, unknown>>('/api/v1/stats/overview'),
-  frequencies: (window?: number) =>
-    get<StatsPayload>(`/api/v1/stats/frequencies${window ? `?window=${window}` : ''}`),
-  delays: (window?: number) =>
-    get<StatsPayload>(`/api/v1/stats/delays${window ? `?window=${window}` : ''}`),
+  overview: async () => {
+    const fromApi = await get<Record<string, unknown>>('/api/v1/stats/overview');
+    if (fromApi) return fromApi;
+    const draws = await supabaseAllDraws();
+    return draws.length > 0 ? computeOverview(draws, DISCLAIMER) : null;
+  },
+  frequencies: async (window?: number) => {
+    const fromApi = await get<StatsPayload>(
+      `/api/v1/stats/frequencies${window ? `?window=${window}` : ''}`,
+    );
+    if (fromApi) return fromApi;
+    const draws = await supabaseAllDraws();
+    return draws.length > 0 ? computeFrequencies(applyWindow(draws, window), DISCLAIMER) : null;
+  },
+  delays: async (window?: number) => {
+    const fromApi = await get<StatsPayload>(`/api/v1/stats/delays${window ? `?window=${window}` : ''}`);
+    if (fromApi) return fromApi;
+    const draws = await supabaseAllDraws();
+    return draws.length > 0 ? computeDelays(applyWindow(draws, window), DISCLAIMER) : null;
+  },
   gaps: () => get<StatsPayload>('/api/v1/stats/gaps'),
   pairs: (limit = 20) => get<Record<string, unknown>>(`/api/v1/stats/pairs?limit=${limit}`),
   shapes: () => get<Record<string, unknown>>('/api/v1/stats/shapes'),
@@ -89,11 +113,6 @@ export const api = {
 };
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-
-export const DISCLAIMER =
-  'Les tirages sont aléatoires. Les statistiques passées ne permettent pas de prévoir ' +
-  'avec certitude les résultats futurs. Toute grille valide conserve la même probabilité ' +
-  'théorique de gain.';
 
 export const INDEPENDENCE =
   "LotoLab IA est un outil indépendant d'analyse statistique. Il n'est pas affilié à la " +
