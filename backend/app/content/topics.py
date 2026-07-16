@@ -94,6 +94,56 @@ EVERGREEN_TOPICS: list[Topic] = [
         "evergreen",
         "Jeu responsable : comprendre les risques avant de jouer",
     ),
+    Topic(
+        "repartition-dizaines-loto",
+        "evergreen",
+        "La répartition par dizaines au Loto, expliquée",
+    ),
+    Topic(
+        "paires-cooccurrences-expliquees",
+        "evergreen",
+        "Paires et cooccurrences : que mesurent-elles vraiment ?",
+    ),
+    Topic(
+        "numeros-consecutifs-frequence-reelle",
+        "evergreen",
+        "Numéros consécutifs : sont-ils vraiment rares au Loto ?",
+    ),
+    Topic(
+        "equilibrage-pair-impair-bas-haut",
+        "evergreen",
+        "Équilibrage pair/impair et bas/haut : à quoi ça sert ?",
+    ),
+    Topic(
+        "controle-somme-grille-loto",
+        "evergreen",
+        "Contrôler la somme d'une grille de Loto : pourquoi et comment",
+    ),
+    Topic(
+        "mediane-dispersion-grille-loto",
+        "evergreen",
+        "Médiane et dispersion d'une grille de Loto, expliquées simplement",
+    ),
+    Topic(
+        "histoire-loto-francais-reforme-2008",
+        "evergreen",
+        "Petite histoire du Loto français et de sa réforme de 2008",
+    ),
+    Topic(
+        "tirage-equiprobable-explication",
+        "evergreen",
+        "Qu'est-ce qu'un tirage équiprobable ?",
+    ),
+    Topic(
+        "glossaire-termes-statistiques-loto",
+        "evergreen",
+        "Glossaire : les termes statistiques du Loto expliqués simplement",
+    ),
+    Topic(
+        "esperance-de-gain-mathematiques-du-jeu",
+        "evergreen",
+        "L'espérance de gain, ou pourquoi les mathématiques du jeu ne trompent pas",
+    ),
 ]
 
 ROLLING_TOP_SLUG = "palmares-100-derniers-tirages"

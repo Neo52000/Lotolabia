@@ -330,6 +330,263 @@ LotoLab IA est un outil d'analyse statistique indépendant. Il n'est affilié
 à aucun opérateur de jeux d'argent et ne perçoit aucune commission sur les
 mises des joueurs.
 """,
+    "repartition-dizaines-loto": """
+## Qu'est-ce qu'une « dizaine » au Loto ?
+
+Les 49 numéros du Loto se répartissent en cinq groupes de dix : 1-9 (souvent
+compté à part), 10-19, 20-29, 30-39 et 40-49. LotoLab IA calcule, pour
+chaque tirage et chaque période, combien de numéros tombent dans chaque
+tranche — une lecture complémentaire aux fréquences numéro par numéro.
+
+## Pourquoi les dizaines se répartissent-elles de façon homogène ?
+
+Sur un grand nombre de tirages, chaque dizaine contient environ le même
+nombre de numéros (9 ou 10 selon la tranche), donc la probabilité qu'un
+numéro tiré appartienne à telle ou telle dizaine est proche d'une tranche à
+l'autre. Sur un historique long, la répartition observée des dizaines tend
+donc à se rapprocher de cette proportion théorique — sans jamais la
+respecter exactement à court terme, exactement comme pour n'importe quelle
+autre statistique de fréquence.
+
+## À quoi sert cette lecture ?
+
+Regrouper par dizaines aide à visualiser la répartition d'un tirage en un
+coup d'œil (une grille avec cinq numéros dans la même dizaine est
+statistiquement rare, sans être impossible ni « anormale »). C'est un outil
+de lecture descriptive, pas un critère de sélection qui changerait la
+probabilité de gain d'une grille.
+""",
+    "paires-cooccurrences-expliquees": """
+## Une cooccurrence, qu'est-ce que c'est ?
+
+Une cooccurrence mesure combien de fois deux numéros sont sortis ensemble
+dans le même tirage. LotoLab IA calcule, pour chaque numéro, ses
+« compagnons » les plus fréquents — les numéros qui partagent le plus
+souvent un tirage avec lui sur l'historique analysé.
+
+## Pourquoi certaines paires paraissent plus fréquentes que d'autres
+
+Avec 49 numéros possibles, il existe 1 176 paires distinctes. Sur un
+historique de plusieurs milliers de tirages, chaque paire n'apparaît que
+quelques dizaines de fois en moyenne — un échantillon assez petit pour que
+des écarts visibles apparaissent naturellement, sans qu'aucune paire ne
+soit réellement favorisée par le mécanisme du tirage (chaque boule est
+tirée indépendamment des autres).
+
+## Ce qu'il ne faut pas en déduire
+
+Voir qu'une paire est sortie plus souvent que d'autres dans le passé ne
+change rien à sa probabilité de ressortir ensemble au prochain tirage :
+chaque combinaison de 5 numéros reste strictement équiprobable. Les
+cooccurrences sont un outil d'exploration de l'historique, pas un signal
+prédictif.
+""",
+    "numeros-consecutifs-frequence-reelle": """
+## Deux numéros qui se suivent, c'est fréquent ou rare ?
+
+Un tirage contient des numéros consécutifs (comme 23 et 24) plus souvent
+qu'on ne l'imagine intuitivement. LotoLab IA compte, sur l'historique
+analysé, la proportion de tirages contenant au moins une paire de numéros
+consécutifs.
+
+## Le calcul qui surprend
+
+Sur les combinaisons de 5 numéros parmi 49, une majorité contient au moins
+deux numéros consécutifs — c'est un résultat purement combinatoire, pas une
+propriété du hasard « bien ou mal réparti ». L'intuition qui voit les
+numéros consécutifs comme rares ou suspects se trompe sur ce point précis.
+
+## Pourquoi cette intuition trompeuse est courante
+
+Face à une grille avec des numéros consécutifs, on a tendance à y voir un
+motif remarquable — alors qu'une grille sans aucun numéro consécutif est en
+réalité statistiquement moins fréquente parmi l'ensemble des combinaisons
+possibles. Les deux types de grilles ont pourtant exactement la même
+probabilité théorique de sortir.
+""",
+    "equilibrage-pair-impair-bas-haut": """
+## Deux équilibrages descriptifs parmi d'autres
+
+L'équilibrage pair/impair compte combien de numéros pairs et impairs
+compose une grille (sur 5 numéros, un équilibre 2-3 ou 3-2 est le plus
+fréquent). L'équilibrage bas/haut compare le nombre de numéros inférieurs
+ou égaux à 24 contre ceux supérieurs — même logique.
+
+## Pourquoi ces répartitions reviennent souvent
+
+Il existe davantage de combinaisons de 5 numéros proches d'un équilibre 2-3
+que de combinaisons totalement déséquilibrées (5 numéros pairs, ou 5
+numéros tous « bas ») — un résultat de dénombrement, pas un effet du
+hasard qui « chercherait » l'équilibre. C'est la même logique que pour la
+somme des numéros (voir notre article sur l'écart-type).
+
+## L'option « équilibrage » du générateur
+
+Le générateur de LotoLab IA propose de contraindre une grille générée à
+respecter ces répartitions les plus fréquentes. Cela ne change rien à sa
+probabilité théorique de gain : cela influence uniquement la manière dont
+les numéros sont choisis pendant la génération, pas les règles du tirage
+réel.
+""",
+    "controle-somme-grille-loto": """
+## Contrôler la somme, concrètement
+
+Le générateur de LotoLab IA permet de fixer une somme minimale et maximale
+pour les 5 numéros d'une grille générée. Par défaut, la fourchette proposée
+(100 à 150) correspond à la zone où se concentre la majorité des
+combinaisons possibles — voir notre article sur l'écart-type appliqué aux
+tirages pour le détail du calcul.
+
+## Pourquoi proposer cette option
+
+Certains joueurs souhaitent éviter les grilles à somme extrême (très basse
+ou très haute), simplement parce qu'elles sont rares parmi l'ensemble des
+combinaisons — une préférence esthétique ou exploratoire, pas une stratégie
+qui changerait la probabilité de gain.
+
+## Une contrainte parmi d'autres, jamais un avantage
+
+Contrôler la somme réduit le nombre de grilles possibles parmi lesquelles le
+générateur peut piocher, sans favoriser aucune d'entre elles par rapport aux
+autres grilles valides du jeu réel. Chaque grille générée avec cette option
+conserve exactement la même probabilité théorique de gain que n'importe
+quelle autre grille.
+""",
+    "mediane-dispersion-grille-loto": """
+## Deux mesures complémentaires à l'écart-type
+
+La médiane d'une grille est la valeur qui sépare ses 5 numéros triés en deux
+moitiés égales (le troisième numéro sur cinq, une fois triés). La
+dispersion, elle, décrit l'étendue des valeurs — du minimum au maximum de la
+grille (aussi appelée amplitude).
+
+## Ce que ces mesures racontent sur une grille
+
+Une grille avec une médiane proche de 25 et une dispersion large (numéros
+répartis sur toute la plage 1-49) ressemble à la majorité des combinaisons
+observées dans l'historique. Une grille avec une médiane extrême ou une
+dispersion très faible (numéros tous proches les uns des autres) est plus
+rare parmi l'ensemble des combinaisons possibles — sans être ni impossible,
+ni moins probable au tirage suivant.
+
+## Une lecture descriptive du passé, pas un critère de choix fiable
+
+LotoLab IA affiche ces indicateurs pour permettre d'explorer et de comparer
+des grilles ou des périodes de tirages. Comme pour toutes les statistiques
+du site, ils décrivent ce qui s'est passé — ils ne permettent pas de
+prévoir ce qui va se passer.
+""",
+    "histoire-loto-francais-reforme-2008": """
+## Les débuts du Loto en France
+
+Le Loto national français a été lancé en 1976. Sa formule a évolué plusieurs
+fois au fil des décennies, avec des changements de nombre de numéros et de
+mécanisme du numéro complémentaire.
+
+## La réforme de 2008
+
+En 2008, le jeu a été profondément réformé pour adopter le format encore en
+vigueur aujourd'hui : 5 numéros tirés parmi 49, plus un numéro Chance tiré
+indépendamment parmi 10. L'ancien format (6 numéros parmi 49, plus un numéro
+complémentaire) a été abandonné à cette occasion — un changement de règles
+suffisamment important pour que les statistiques d'avant et d'après 2008 ne
+soient pas directement comparables.
+
+## Pourquoi LotoLab IA commence son historique en 2008
+
+La base de données de LotoLab IA couvre le Loto dans son format actuel,
+c'est-à-dire depuis la réforme de 2008. Les données antérieures, dans
+l'ancien format à 6 numéros, décrivent un jeu différent de celui joué
+aujourd'hui et ne sont pas mélangées aux statistiques du Loto actuel, pour
+éviter toute confusion entre deux jeux aux règles distinctes.
+""",
+    "tirage-equiprobable-explication": """
+## La définition simple
+
+Un tirage est dit équiprobable quand chaque résultat possible a exactement
+la même probabilité de se produire. Au Loto, cela signifie que chacune des
+1 906 884 combinaisons possibles de 5 numéros parmi 49 (multipliée par les
+10 valeurs du numéro Chance, soit 19 068 840 combinaisons complètes) a
+exactement la même chance de sortir à chaque tirage.
+
+## Ce que ça implique concrètement
+
+La combinaison 1-2-3-4-5 a exactement la même probabilité de sortir que
+n'importe quelle autre combinaison de 5 numéros, aussi « aléatoire » ou
+« organisée » qu'elle puisse paraître. Notre intuition a tendance à juger
+certaines combinaisons comme plus ou moins probables selon leur apparence
+(numéros consécutifs, dates de naissance, motifs visuels) — une erreur de
+raisonnement, puisque le mécanisme du tirage ne « voit » aucune de ces
+propriétés.
+
+## Pourquoi c'est la base de tout le reste
+
+L'équiprobabilité est le principe fondamental qui sous-tend tous les autres
+articles de ce blog : aucune statistique, aucune méthode de génération,
+aucun outil ne peut modifier cette égalité de probabilité entre les
+combinaisons. C'est une propriété du jeu lui-même, assurée par son
+mécanisme de tirage.
+""",
+    "glossaire-termes-statistiques-loto": """
+## Fréquence
+
+Nombre de fois qu'un numéro est sorti sur une période donnée (fréquence
+absolue), ou part des tirages où il est sorti (fréquence relative,
+généralement exprimée en pourcentage).
+
+## Retard
+
+Nombre de tirages écoulés depuis la dernière sortie d'un numéro. Un retard
+de 0 signifie que le numéro est sorti au dernier tirage ; « jamais sorti »
+signifie qu'il n'est apparu à aucun moment sur la période analysée.
+
+## Écart (ou cycle)
+
+Nombre de tirages entre deux sorties consécutives d'un même numéro. LotoLab
+IA calcule l'écart minimal, moyen et maximal observés pour chaque numéro.
+
+## Cooccurrence
+
+Fréquence à laquelle deux numéros sortent ensemble dans le même tirage —
+voir notre article dédié aux paires et cooccurrences.
+
+## Écart-type, médiane, dispersion (amplitude)
+
+Trois mesures qui décrivent comment les valeurs (par exemple la somme des 5
+numéros d'une grille) se répartissent autour de leur moyenne — voir nos
+articles dédiés à l'écart-type et à la médiane/dispersion.
+
+## Pourquoi ce glossaire
+
+Ces termes reviennent dans toutes les pages statistiques de LotoLab IA :
+avoir leurs définitions précises à portée de main aide à interpréter
+correctement chaque chiffre affiché, sans lui prêter un pouvoir prédictif
+qu'il n'a pas.
+""",
+    "esperance-de-gain-mathematiques-du-jeu": """
+## Qu'est-ce que l'espérance de gain ?
+
+L'espérance de gain est la moyenne théorique de ce qu'un joueur peut
+attendre de gagner (ou perdre) par mise, si l'on répétait le jeu un très
+grand nombre de fois. Elle se calcule en pondérant chaque gain possible par
+sa probabilité de survenir, moins le coût de la mise.
+
+## Pourquoi elle est structurellement négative
+
+Comme pour tout jeu d'argent organisé par un opérateur, une partie des mises
+collectées sert à financer l'organisation du jeu et les taxes, avant
+redistribution du reste en gains. Mathématiquement, cela signifie que
+l'espérance de gain d'une mise est toujours inférieure à son coût, quelle
+que soit la grille jouée ou la méthode utilisée pour la choisir.
+
+## Ce que ça signifie pour un joueur
+
+Aucune stratégie de sélection de numéros ne peut rendre l'espérance de gain
+positive : c'est une propriété mathématique du jeu, indépendante des
+numéros choisis. Comprendre cela permet de jouer en connaissance de cause,
+comme une activité de loisir avec un coût attendu, et non comme un moyen
+d'obtenir un rendement financier.
+""",
 }
 
 
