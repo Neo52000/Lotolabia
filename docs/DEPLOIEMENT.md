@@ -26,9 +26,24 @@ docs/MONETISATION.md) : `SITE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_LIFETIME`.
 
 Le `Dockerfile` est fourni dans `backend/Dockerfile` (image `python:3.11-slim`,
-`uvicorn` en CMD, 2 workers). Un exemple de config Fly.io est fourni dans
-`backend/fly.toml.example` (à copier vers `fly.toml` après `fly launch`, région
-`cdg` recommandée pour rester proche de Supabase eu-west-3).
+`uvicorn` en CMD, 2 workers). `backend/fly.toml` est prêt à l'emploi (app
+`lotolabia`, région `cdg` pour rester proche de Supabase eu-west-3,
+`min_machines_running = 0` pour rester dans l'offre gratuite au prix d'un cold
+start) — `backend/fly.toml.example` reste disponible comme référence commentée.
+
+**Point d'attention monorepo** : ce dépôt contient `web/`, `backend/` et `mobile/`
+à la racine — il n'y a pas de `Dockerfile` à la racine. `fly launch` doit être
+exécuté **depuis le dossier `backend/`**, ou le tableau de bord Fly.io connecté à
+GitHub doit être configuré avec `backend` comme répertoire racine, sinon il ne
+détecte rien.
+
+```bash
+cd backend
+fly launch --copy-config --name lotolabia   # utilise fly.toml existant, ne pas régénérer
+fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... SUPABASE_JWT_SECRET=... \
+  CORS_ORIGINS=https://<domaine>
+fly deploy
+```
 
 Points d'attention :
 - `/docs` (Swagger) est automatiquement désactivé quand `ENVIRONMENT=production` ;
