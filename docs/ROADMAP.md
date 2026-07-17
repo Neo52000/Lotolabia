@@ -17,7 +17,8 @@
       lancer le premier import complet (voir docs/IMPORT_AUTOMATIQUE.md).
 - [ ] Déployer l'API (hébergeur UE) + activer `SCHEDULER_ENABLED` sur une instance.
 - [ ] Domaine définitif + Search Console + première campagne d'indexation.
-- [ ] Compléter mentions légales / contacts RGPD (placeholders signalés).
+- [ ] Compléter mentions légales : forme juridique et adresse du siège encore
+      manquantes (raison sociale, RCS et contacts RGPD déjà renseignés).
 - [ ] Bêta fermée Android (Play Console — piste interne) et iOS (TestFlight).
 - [ ] Notifications push réelles (FCM/APNs) branchées sur la table `notifications`
       et le collecteur (nouveau tirage), dans les limites jeu responsable.

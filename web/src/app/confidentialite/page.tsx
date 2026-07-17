@@ -69,7 +69,7 @@ export default function PrivacyPage() {
         <p className="text-sm opacity-90">
           Accès, rectification, portabilité (export JSON en libre-service dans l&apos;application),
           effacement (suppression de compte en libre-service), limitation et opposition. Contact :
-          [e-mail DPO/contact à compléter avant mise en production]. Vous pouvez saisir la CNIL
+          reine.elie@gmail.com. Vous pouvez saisir la CNIL
           (cnil.fr) si vous estimez vos droits non respectés.
         </p>
       </Section>

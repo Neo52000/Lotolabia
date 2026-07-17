@@ -17,7 +17,7 @@ export default function ContactPage() {
         <p className="text-sm opacity-90">
           Support, question sur une statistique, exercice de vos droits RGPD ou demande presse :
           <br />
-          <strong>[adresse e-mail de contact à configurer avant mise en production]</strong>
+          <strong>reine.elie@gmail.com</strong>
         </p>
         <p className="mt-3 text-sm opacity-80">
           Nous répondons généralement sous 48 h ouvrées. Pour la suppression de compte, utilisez

@@ -35,6 +35,7 @@ Les tirages du Loto sont des **données publiques**, sans caractère personnel.
 - **Rectification** : préférences et profil modifiables dans l'application.
 - **Retrait du consentement** : interrupteurs dédiés (publicité, mesure d'audience),
   horodatés dans `consent_updated_at`.
+- **Contact DPO** : reine.elie@gmail.com.
 
 ## Conservation et purge
 
@@ -54,7 +55,7 @@ Les tirages du Loto sont des **données publiques**, sans caractère personnel.
 
 ## Points à compléter avant la mise en production
 
-- [ ] E-mail de contact RGPD/DPO dans l'app, le site et ce document.
+- [x] E-mail de contact RGPD/DPO dans l'app, le site et ce document (reine.elie@gmail.com).
 - [ ] Registre des traitements (obligation art. 30).
 - [ ] Tâche automatique de purge des comptes inactifs.
 - [ ] CMP (consent management) si des SDK publicitaires tiers sont activés.

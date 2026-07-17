@@ -84,8 +84,8 @@ spécifiques (classification 18+, déclarations) — prévoir la revue en consé
 - [ ] Premier admin promu (`profiles.role='admin'`).
 - [ ] `COLLECTOR_HISTORY_URLS` validées + premier import complet vérifié.
 - [ ] CORS restreint au(x) domaine(s) réel(s).
-- [ ] Placeholders complétés : e-mails de contact (mentions légales, confidentialité,
-      SECURITY.md), raison sociale.
+- [x] E-mails de contact et raison sociale complétés (mentions légales, confidentialité,
+      SECURITY.md, INCIDENT_RESPONSE.md). Restent : forme juridique et adresse du siège.
 - [ ] Environnement GitHub `production` protégé par relecteur requis.
 - [ ] Sauvegardes Supabase vérifiées (et PITR si plan le permettant).
 - [ ] Supervision `/health` + alerte sur jobs `failed`.
