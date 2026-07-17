@@ -23,7 +23,7 @@ export default function LegalPage() {
           <br />
           Directeur de la publication : Reine Elie.
           <br />
-          Contact : reine.elie@gmail.com.
+          Contact : <a href="mailto:reine.elie@gmail.com" className="underline">reine.elie@gmail.com</a>.
           <br />
           [À compléter avant mise en production : forme juridique, adresse du siège.]
         </p>

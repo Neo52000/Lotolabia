@@ -68,8 +68,8 @@ export default function PrivacyPage() {
       <Section title="Vos droits (RGPD)">
         <p className="text-sm opacity-90">
           Accès, rectification, portabilité (export JSON en libre-service dans l&apos;application),
-          effacement (suppression de compte en libre-service), limitation et opposition. Contact :
-          reine.elie@gmail.com. Vous pouvez saisir la CNIL
+          effacement (suppression de compte en libre-service), limitation et opposition. Contact :{' '}
+          <a href="mailto:reine.elie@gmail.com" className="underline">reine.elie@gmail.com</a>. Vous pouvez saisir la CNIL
           (cnil.fr) si vous estimez vos droits non respectés.
         </p>
       </Section>
