@@ -48,7 +48,9 @@ class Repository(Protocol):
     async def set_profile_role(self, user_id: str, role: str) -> None: ...
     async def has_active_premium(self, user_id: str) -> bool: ...
     async def list_entitlements(self, user_id: str | None = None) -> list[dict]: ...
+    async def get_entitlement_by_receipt_ref(self, receipt_ref: str) -> dict | None: ...
     async def grant_entitlement(self, **fields: Any) -> int: ...
+    async def update_entitlement(self, entitlement_id: int, **fields: Any) -> None: ...
     async def revoke_entitlement(self, entitlement_id: int) -> None: ...
 
     # --- Grilles / favoris / préférences / notifications ---
@@ -248,6 +250,12 @@ class MemoryRepository:
             e for e in self._entitlements.values() if user_id is None or e["user_id"] == user_id
         ]
 
+    async def get_entitlement_by_receipt_ref(self, receipt_ref: str) -> dict | None:
+        for ent in self._entitlements.values():
+            if ent.get("receipt_ref") == receipt_ref:
+                return ent
+        return None
+
     async def grant_entitlement(self, **fields: Any) -> int:
         ent_id = next(self._ids)
         self._entitlements[ent_id] = {
@@ -257,6 +265,12 @@ class MemoryRepository:
             **fields,
         }
         return ent_id
+
+    async def update_entitlement(self, entitlement_id: int, **fields: Any) -> None:
+        ent = self._entitlements.get(entitlement_id)
+        if ent is None:
+            raise NotFoundError("Droit Premium introuvable.")
+        ent.update(fields)
 
     async def revoke_entitlement(self, entitlement_id: int) -> None:
         ent = self._entitlements.get(entitlement_id)

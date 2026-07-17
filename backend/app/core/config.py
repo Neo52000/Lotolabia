@@ -89,6 +89,20 @@ class Settings(BaseSettings):
     )
     app_store_shared_secret: str = ""
 
+    # --- Paiement web (Stripe) -------------------------------------------------
+    # Réservé au web tant qu'aucune clé n'est configurée — jamais de session ou
+    # de droit Premium simulé.
+    site_url: str = Field(
+        default="http://localhost:3000", description="URL publique du site (redirections Stripe)"
+    )
+    stripe_secret_key: str = Field(default="", description="Clé secrète Stripe — serveur uniquement")
+    stripe_webhook_secret: str = Field(
+        default="", description="Secret de signature du webhook Stripe (whsec_...)"
+    )
+    stripe_price_monthly: str = ""
+    stripe_price_yearly: str = ""
+    stripe_price_lifetime: str = ""
+
     # --- Limites offre gratuite ----------------------------------------------
     free_saved_grids_limit: int = 5
     free_generator_daily_limit: int = 10
@@ -106,6 +120,10 @@ class Settings(BaseSettings):
     @property
     def supabase_configured(self) -> bool:
         return bool(self.supabase_url and self.supabase_service_role_key)
+
+    @property
+    def stripe_enabled(self) -> bool:
+        return bool(self.stripe_secret_key and self.stripe_webhook_secret)
 
 
 @lru_cache

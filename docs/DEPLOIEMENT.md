@@ -21,7 +21,9 @@ Variables d'environnement requises (voir `backend/.env.example`) :
 `SUPABASE_JWT_SECRET` **ou** `SUPABASE_JWKS_URL`, `CORS_ORIGINS=https://<domaine>`,
 `COLLECTOR_HISTORY_URLS`, `SCHEDULER_ENABLED=true` et `CONTENT_SCHEDULER_ENABLED=true`
 (chacun sur **une seule** instance),
-`RATE_LIMIT_DEFAULT`.
+`RATE_LIMIT_DEFAULT`. Pour activer le paiement web (optionnel, voir
+docs/MONETISATION.md) : `SITE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+`STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_LIFETIME`.
 
 Le `Dockerfile` est fourni dans `backend/Dockerfile` (image `python:3.11-slim`,
 `uvicorn` en CMD, 2 workers). Un exemple de config Fly.io est fourni dans
@@ -86,6 +88,9 @@ spécifiques (classification 18+, déclarations) — prévoir la revue en consé
 - [ ] CORS restreint au(x) domaine(s) réel(s).
 - [x] E-mails de contact et raison sociale complétés (mentions légales, confidentialité,
       SECURITY.md, INCIDENT_RESPONSE.md). Restent : forme juridique et adresse du siège.
+- [ ] (Optionnel) Paiement web Stripe : clés renseignées + endpoint webhook créé dans
+      le Dashboard Stripe. Sans compte utilisateur web, aucun parcours d'achat n'est
+      encore exposé sur le site — voir docs/MONETISATION.md.
 - [ ] Environnement GitHub `production` protégé par relecteur requis.
 - [ ] Sauvegardes Supabase vérifiées (et PITR si plan le permettant).
 - [ ] Supervision `/health` + alerte sur jobs `failed`.
