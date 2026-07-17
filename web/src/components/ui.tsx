@@ -4,13 +4,11 @@ import { DISCLAIMER, INDEPENDENCE, type Draw, type NumberStat } from '@/lib/api'
 
 export function NumberBall({ n, chance = false, size = 'md' }: { n: number; chance?: boolean; size?: 'sm' | 'md' }) {
   const dimension = size === 'sm' ? 'h-8 w-8 text-xs' : 'h-11 w-11 text-base';
-  const gradient = chance
-    ? 'from-brand-pink to-brand-violet'
-    : 'from-brand to-brand-violet';
+  const color = chance ? 'bg-accent' : 'bg-primary';
   return (
     <span
       aria-label={chance ? `Numéro Chance ${n}` : `Numéro ${n}`}
-      className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br font-bold text-white ${gradient} ${dimension}`}
+      className={`inline-flex items-center justify-center rounded-full font-bold text-white ${color} ${dimension}`}
     >
       {n}
     </span>
@@ -30,7 +28,7 @@ export function DrawBalls({ draw, size = 'md' }: { draw: Draw; size?: 'sm' | 'md
 
 export function Disclaimer() {
   return (
-    <p className="rounded-xl border border-brand-yellow/40 bg-brand-yellow/10 p-4 text-sm">
+    <p className="rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm">
       ⚠️ {DISCLAIMER}
     </p>
   );
@@ -42,7 +40,7 @@ export function Independence() {
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <section className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
       <h2 className="mb-4 text-lg font-semibold">{title}</h2>
       {children}
     </section>
@@ -64,7 +62,7 @@ export function BarList({
         <li key={item.label} className="flex items-center gap-3 text-sm">
           <span className="w-10 shrink-0 font-semibold">
             {item.href || labelHref ? (
-              <Link className="text-brand hover:underline" href={item.href ?? labelHref!(item.label)}>
+              <Link className="text-primary hover:underline" href={item.href ?? labelHref!(item.label)}>
                 {item.label}
               </Link>
             ) : (
@@ -73,7 +71,7 @@ export function BarList({
           </span>
           <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <span
-              className="block h-full rounded-full bg-gradient-to-r from-brand to-brand-violet"
+              className="block h-full rounded-full bg-slate-400 dark:bg-slate-500"
               style={{ width: `${(item.value / max) * 100}%` }}
             />
           </span>
@@ -88,7 +86,7 @@ export function BarList({
 export function SkeletonSection({ lines = 4 }: { lines?: number }) {
   return (
     <section
-      className="animate-pulse rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      className="animate-pulse rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900"
       aria-hidden="true"
     >
       <div className="mb-4 h-4 w-40 rounded bg-slate-200 dark:bg-slate-800" />

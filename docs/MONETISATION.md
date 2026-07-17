@@ -54,7 +54,7 @@ configurables (`FREE_*` dans `.env`).
 4. Côté Flutter : ajouter `in_app_purchase`, compiler avec
    `--dart-define=PURCHASES_ENABLED=true` (le paywall est déjà branché sur ce flag).
 
-## Publicité
+## Publicité mobile (AdMob)
 
 - Table `ad_placements` : chaque emplacement a un code, un réseau (AdMob), un ID
   d'unité et un plafond par session — **tout est désactivé par défaut** et ne
@@ -63,6 +63,29 @@ configurables (`FREE_*` dans `.env`).
   intrusifs ; jamais pendant l'onboarding ni sur les écrans de conformité.
 - Prérequis avant activation : compte AdMob, CMP de consentement (TCF), mise à jour
   de la politique de confidentialité (régie = sous-traitant).
+
+## Publicité web (prévue, non activée)
+
+Le site web n'a aujourd'hui aucun mécanisme publicitaire — ni compte régie, ni
+script, ni emplacement réservé dans les pages. Piste envisagée à l'ouverture du
+premier revenu web, dans le respect des mêmes principes non négociables que la
+publicité mobile :
+
+- **Régie envisagée** : Google AdSense (display), à défaut d'une régie française
+  spécialisée jeu responsable si une option plus adaptée existe au moment de
+  l'activation.
+- Emplacements discrets uniquement (pied de page, barre latérale sur pages de
+  statistiques) — jamais en préroll, jamais en interstitiel, jamais sur
+  `/jeu-responsable`, `/confidentialite`, `/mentions-legales` ni `/contact`.
+  Plafond par session, comme pour AdMob.
+- Personnalisation des annonces uniquement sur consentement explicite (CMP TCF),
+  désactivée par défaut — cohérent avec `docs/SEO.md`/`confidentialite`.
+- **Prérequis avant toute activation** : compte AdSense approuvé, `ads.txt` publié,
+  CMP intégré, section « Publicité » de `/confidentialite` mise à jour pour lister
+  la régie comme sous-traitant.
+- **État actuel** : aucune variable d'environnement, composant ou script AdSense
+  n'existe dans `web/` — à créer uniquement une fois le compte AdSense obtenu, pour
+  éviter du code non testable branché sur un identifiant fictif.
 
 ## Revenus complémentaires (prévus, non activés)
 
