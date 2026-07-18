@@ -12,6 +12,7 @@ const NAV = [
   { href: '/admin/quarantine', label: 'Quarantaine' },
   { href: '/admin/draws', label: 'Tirages' },
   { href: '/admin/users', label: 'Utilisateurs' },
+  { href: '/admin/subscriptions', label: 'Abonnements' },
   { href: '/admin/seo', label: 'Contenus SEO' },
   { href: '/admin/ads', label: 'Publicités' },
   { href: '/admin/audit', label: 'Audit & état' },

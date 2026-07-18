@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { AdminCard, AdminMessage, formatTs, StatusBadge, useAdminData } from '@/components/admin';
@@ -12,22 +13,12 @@ interface Profile {
   created_at: string;
 }
 
-interface Entitlement {
-  id: number;
-  user_id: string;
-  product: string;
-  platform: string;
-  status: string;
-  expires_at: string | null;
-}
-
 export default function AdminUsersPage() {
   const users = useAdminData<{ items: Profile[]; total: number }>(
     '/api/v1/admin/users?page=1&page_size=50',
   );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [entitlements, setEntitlements] = useState<Entitlement[] | null>(null);
 
   async function setRole(userId: string, role: string) {
     setMessage(null);
@@ -107,39 +98,17 @@ export default function AdminUsersPage() {
           </p>
         )}
       </AdminCard>
-      <AdminCard
-        title="Droits Premium"
-        actions={
-          <button
-            onClick={async () => {
-              try {
-                setEntitlements(await adminFetch<Entitlement[]>('/api/v1/admin/premium'));
-              } catch {
-                setEntitlements([]);
-              }
-            }}
-            className="text-sm text-brand hover:underline"
-          >
-            Recharger
-          </button>
-        }
-      >
-        <p className="mb-3 text-xs opacity-70">
-          Les achats via les stores synchroniseront automatiquement cette table
-          (webhooks de reçus — voir docs/MONETISATION.md). Les droits manuels servent au support.
+      <AdminCard title="Droits Premium">
+        <p className="text-sm">
+          La gestion complète des abonnements (filtres, révocation, modification de
+          l&apos;expiration) se trouve désormais dans{' '}
+          <Link href="/admin/subscriptions" className="text-brand hover:underline">
+            Abonnements
+          </Link>
+          . Les achats via Stripe et les stores mobiles synchronisent cette table
+          automatiquement (webhooks de reçus — voir docs/MONETISATION.md) ; les droits manuels
+          servent au support.
         </p>
-        {entitlements && entitlements.length > 0 && (
-          <ul className="space-y-1 text-sm">
-            {entitlements.map((entitlement) => (
-              <li key={entitlement.id} className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={entitlement.status} />
-                <span className="font-mono text-xs">{entitlement.user_id.slice(0, 8)}…</span>
-                <span>{entitlement.product} ({entitlement.platform})</span>
-                <span className="opacity-60">expire : {entitlement.expires_at ?? 'jamais'}</span>
-              </li>
-            ))}
-          </ul>
-        )}
       </AdminCard>
     </div>
   );
