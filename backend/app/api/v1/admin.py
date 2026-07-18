@@ -4,6 +4,7 @@ Tous les endpoints exigent le rôle admin, et toutes les actions sensibles
 sont journalisées dans `audit_log`.
 """
 
+from datetime import datetime
 from pathlib import PurePosixPath
 
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
@@ -297,6 +298,26 @@ class EntitlementUpdate(BaseModel):
     status: str | None = Field(default=None, pattern="^(active|expired|revoked|refunded)$")
     product: str | None = Field(default=None, pattern="^(monthly|yearly|lifetime|trial)$")
     expires_at: str | None = None
+
+    @field_validator("status", "product")
+    @classmethod
+    def _no_explicit_null(cls, value: str | None) -> str | None:
+        # Ces champs sont optionnels (omis = inchangé), mais un `null` explicite
+        # provoquerait une violation de contrainte NOT NULL en base.
+        if value is None:
+            raise ValueError("ne peut pas être défini à null explicitement.")
+        return value
+
+    @field_validator("expires_at")
+    @classmethod
+    def _valid_iso_datetime(cls, value: str | None) -> str | None:
+        if not value:
+            return None
+        try:
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError("expires_at doit être une date ISO 8601 valide.") from exc
+        return value
 
 
 @router.patch("/premium/{entitlement_id}", status_code=204)

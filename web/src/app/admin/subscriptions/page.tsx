@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AdminCard, AdminMessage, formatTs, StatusBadge, useAdminData } from '@/components/admin';
 import { adminFetch } from '@/lib/adminApi';
@@ -31,7 +31,13 @@ export default function AdminSubscriptionsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [platformFilter, setPlatformFilter] = useState('');
+  const [userIdInput, setUserIdInput] = useState('');
   const [userIdFilter, setUserIdFilter] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setUserIdFilter(userIdInput), 400);
+    return () => clearTimeout(timer);
+  }, [userIdInput]);
 
   const path = useMemo(() => {
     const params = new URLSearchParams();
@@ -210,8 +216,8 @@ export default function AdminSubscriptionsPage() {
             ))}
           </select>
           <input
-            value={userIdFilter}
-            onChange={(event) => setUserIdFilter(event.target.value)}
+            value={userIdInput}
+            onChange={(event) => setUserIdInput(event.target.value)}
             placeholder="Filtrer par identifiant utilisateur"
             className="min-w-[16rem] rounded-lg border border-slate-300 px-3 py-1.5 dark:border-slate-600 dark:bg-slate-800"
           />
