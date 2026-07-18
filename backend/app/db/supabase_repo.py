@@ -293,6 +293,13 @@ class SupabaseRepository:
             params["user_id"] = f"eq.{user_id}"
         return await self._select("premium_entitlements", params)
 
+    async def get_entitlement_by_receipt_ref(self, receipt_ref: str) -> dict | None:
+        rows = await self._select(
+            "premium_entitlements",
+            {"select": "*", "receipt_ref": f"eq.{receipt_ref}", "limit": 1},
+        )
+        return rows[0] if rows else None
+
     async def grant_entitlement(self, **fields: Any) -> int:
         response = await self._request(
             "POST",
@@ -301,6 +308,14 @@ class SupabaseRepository:
             headers={"Prefer": "return=representation"},
         )
         return response.json()[0]["id"]
+
+    async def update_entitlement(self, entitlement_id: int, **fields: Any) -> None:
+        await self._request(
+            "PATCH",
+            "premium_entitlements",
+            params={"id": f"eq.{entitlement_id}"},
+            json_body=fields,
+        )
 
     async def revoke_entitlement(self, entitlement_id: int) -> None:
         await self._request(

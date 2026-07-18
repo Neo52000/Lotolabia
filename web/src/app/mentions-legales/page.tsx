@@ -17,10 +17,15 @@ export default function LegalPage() {
       <h1 className="text-2xl font-bold">Mentions légales</h1>
       <Section title="Éditeur">
         <p className="text-sm opacity-90">
-          LotoLab IA — outil indépendant d&apos;analyse statistique.
+          LotoLab IA — outil indépendant d&apos;analyse statistique, édité par Reine Elie.
           <br />
-          [À compléter avant mise en production : raison sociale, forme juridique, adresse,
-          SIREN, directeur de la publication, e-mail de contact.]
+          RCS 100 208 883.
+          <br />
+          Directeur de la publication : Reine Elie.
+          <br />
+          Contact : <a href="mailto:reine.elie@gmail.com" className="underline">reine.elie@gmail.com</a>.
+          <br />
+          [À compléter avant mise en production : forme juridique, adresse du siège.]
         </p>
       </Section>
       <Section title="Hébergement">

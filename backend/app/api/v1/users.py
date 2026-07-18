@@ -2,6 +2,7 @@
 notifications, Premium et droits RGPD (export / suppression)."""
 
 from datetime import UTC
+from typing import Any, Literal
 
 from fastapi import APIRouter, Body, Depends
 from pydantic import BaseModel, Field
@@ -197,6 +198,65 @@ async def submit_receipt(
         "Validation des reçus à brancher avec les identifiants des consoles.",
         501,
     )
+
+
+class CheckoutRequest(BaseModel):
+    product: str = Field(pattern="^(monthly|yearly|lifetime)$")
+
+
+@router.post("/premium/checkout", status_code=201)
+async def create_checkout_session(
+    body: CheckoutRequest,
+    user: AuthUser = Depends(require_user),
+) -> dict:
+    """Crée une session Stripe Checkout pour l'offre demandée (paiement web).
+
+    Le droit Premium n'est accordé qu'après confirmation du paiement par
+    Stripe via le webhook `POST /api/v1/billing/stripe/webhook`
+    (`checkout.session.completed`) — jamais à la création de la session.
+    Désactivé tant que les clés Stripe ne sont pas configurées
+    (`STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`).
+    """
+    from ...core.config import get_settings
+
+    settings = get_settings()
+    if not settings.stripe_enabled:
+        raise AppError(
+            "stripe_not_configured",
+            "Le paiement Stripe n'est pas encore activé sur ce serveur.",
+            501,
+        )
+    price_id = {
+        "monthly": settings.stripe_price_monthly,
+        "yearly": settings.stripe_price_yearly,
+        "lifetime": settings.stripe_price_lifetime,
+    }[body.product]
+    if not price_id:
+        raise AppError(
+            "stripe_price_missing",
+            f"Aucun prix Stripe configuré pour « {body.product} ».",
+            501,
+        )
+
+    import stripe
+
+    stripe.api_key = settings.stripe_secret_key
+    mode: Literal["payment", "subscription"] = (
+        "payment" if body.product == "lifetime" else "subscription"
+    )
+    create_kwargs: dict[str, Any] = {
+        "mode": mode,
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "client_reference_id": user.id,
+        "metadata": {"user_id": user.id, "product": body.product},
+        "success_url": f"{settings.site_url}/premium/succes?session_id={{CHECKOUT_SESSION_ID}}",
+        "cancel_url": f"{settings.site_url}/premium/annule",
+        "allow_promotion_codes": True,
+    }
+    if user.email:
+        create_kwargs["customer_email"] = user.email
+    session = stripe.checkout.Session.create(**create_kwargs)
+    return {"checkout_url": session.url}
 
 
 # --------------------------------------------------------------------- RGPD

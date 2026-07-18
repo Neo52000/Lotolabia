@@ -29,21 +29,24 @@
 Les administrateurs disposent des capacités Premium. Les limites gratuites sont
 configurables (`FREE_*` dans `.env`).
 
-## Achats intégrés (prévus techniquement, désactivés)
+## Achats intégrés
 
 - **Formules** : mensuel, annuel, à vie (`premium_entitlements.product`), période
   d'essai possible (`trial`).
-- **Plateformes** : Google Play Billing, App Store (StoreKit), et `stripe` prévu pour
-  le web ; `manual` pour le support.
-- **Flux** : le client soumet son reçu à `POST /api/v1/me/premium/receipt` → l'API le
-  valide **serveur-à-serveur** auprès du store → `premium_entitlements` est créé/mis à
-  jour (droits synchronisés sur tous les appareils via le même compte).
+- **Plateformes** : Google Play Billing, App Store (StoreKit) pour le mobile ;
+  Stripe pour le web ; `manual` pour le support (octroi/révocation par un admin,
+  `POST/DELETE /api/v1/admin/premium/...`).
 - **Restauration** : bouton « Restaurer mes achats » (mobile) → re-soumission des reçus.
-- **État actuel** : l'endpoint répond `501 store_validation_disabled` tant que
-  `STORE_VALIDATION_ENABLED=false`. Aucun droit n'est accordé sans validation réelle —
-  jamais de validation simulée.
 
-### Activation (quand les comptes stores existeront)
+### Mobile (Google Play / App Store) — prévu techniquement, désactivé
+
+Le client soumet son reçu à `POST /api/v1/me/premium/receipt` → l'API le valide
+**serveur-à-serveur** auprès du store → `premium_entitlements` est créé/mis à jour
+(droits synchronisés sur tous les appareils via le même compte). L'endpoint répond
+`501 store_validation_disabled` tant que `STORE_VALIDATION_ENABLED=false`. Aucun
+droit n'est accordé sans validation réelle — jamais de validation simulée.
+
+Activation (quand les comptes stores existeront) :
 1. Créer les produits dans Play Console / App Store Connect
    (`premium_monthly`, `premium_yearly`, `premium_lifetime`).
 2. Renseigner `GOOGLE_PLAY_PACKAGE_NAME`, `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`,
@@ -53,6 +56,35 @@ configurables (`FREE_*` dans `.env`).
    renouvellements et remboursements.
 4. Côté Flutter : ajouter `in_app_purchase`, compiler avec
    `--dart-define=PURCHASES_ENABLED=true` (le paywall est déjà branché sur ce flag).
+
+### Web (Stripe) — implémenté, désactivé tant que les clés ne sont pas renseignées
+
+- `POST /api/v1/me/premium/checkout` (authentifié) : crée une session Stripe
+  Checkout (`stripe.checkout.Session`) pour l'offre demandée — abonnement
+  (`monthly`/`yearly`) ou paiement unique (`lifetime`) — et renvoie son URL de
+  redirection. Aucun droit accordé à la création de la session.
+- `POST /api/v1/billing/stripe/webhook` (public, signature Stripe vérifiée) :
+  `checkout.session.completed` accorde le droit Premium (`platform=stripe`) ;
+  `customer.subscription.updated` met à jour le statut et la date d'expiration ;
+  `customer.subscription.deleted` révoque le droit. Un remboursement se traite
+  manuellement via `DELETE /api/v1/admin/premium/{id}`, comme pour tout achat.
+- **État actuel** : `POST /me/premium/checkout` répond `501 stripe_not_configured`
+  tant que `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` sont vides — voir
+  `backend/.env.example`.
+- **Pas encore de bouton côté site web** : le site n'a aucun compte utilisateur
+  (ni connexion, ni inscription) — seul le back-office admin est authentifié.
+  L'endpoint est prêt et testé (`backend/tests/test_billing.py`), mais un parcours
+  d'achat visible sur le site nécessite d'abord une connexion/inscription web.
+
+Activation (quand un compte Stripe existe) :
+1. Créer les produits et prix dans le Dashboard Stripe (mensuel, annuel, à vie).
+2. Renseigner `STRIPE_SECRET_KEY`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`,
+   `STRIPE_PRICE_LIFETIME`, `SITE_URL` dans les secrets du déploiement.
+3. Créer le endpoint webhook dans le Dashboard Stripe
+   (`https://<domaine-api>/api/v1/billing/stripe/webhook`, événements
+   `checkout.session.completed`, `customer.subscription.updated`,
+   `customer.subscription.deleted`) et renseigner `STRIPE_WEBHOOK_SECRET` avec le
+   secret de signature généré.
 
 ## Publicité mobile (AdMob)
 

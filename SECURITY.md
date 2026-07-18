@@ -2,7 +2,7 @@
 
 ## Signaler une vulnérabilité
 
-Écrivez à **[e-mail sécurité à configurer]** avec une description, les étapes de
+Écrivez à **reine.elie@gmail.com** avec une description, les étapes de
 reproduction et l'impact estimé. Nous accusons réception sous 72 h. Merci de ne pas
 divulguer publiquement avant correction (divulgation coordonnée, 90 jours max).
 

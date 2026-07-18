@@ -21,12 +21,29 @@ Variables d'environnement requises (voir `backend/.env.example`) :
 `SUPABASE_JWT_SECRET` **ou** `SUPABASE_JWKS_URL`, `CORS_ORIGINS=https://<domaine>`,
 `COLLECTOR_HISTORY_URLS`, `SCHEDULER_ENABLED=true` et `CONTENT_SCHEDULER_ENABLED=true`
 (chacun sur **une seule** instance),
-`RATE_LIMIT_DEFAULT`.
+`RATE_LIMIT_DEFAULT`. Pour activer le paiement web (optionnel, voir
+docs/MONETISATION.md) : `SITE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+`STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_LIFETIME`.
 
 Le `Dockerfile` est fourni dans `backend/Dockerfile` (image `python:3.11-slim`,
-`uvicorn` en CMD, 2 workers). Un exemple de config Fly.io est fourni dans
-`backend/fly.toml.example` (à copier vers `fly.toml` après `fly launch`, région
-`cdg` recommandée pour rester proche de Supabase eu-west-3).
+`uvicorn` en CMD, 2 workers). `backend/fly.toml` est prêt à l'emploi (app
+`lotolabia`, région `cdg` pour rester proche de Supabase eu-west-3,
+`min_machines_running = 0` pour rester dans l'offre gratuite au prix d'un cold
+start) — `backend/fly.toml.example` reste disponible comme référence commentée.
+
+**Point d'attention monorepo** : ce dépôt contient `web/`, `backend/` et `mobile/`
+à la racine — il n'y a pas de `Dockerfile` à la racine. `fly launch` doit être
+exécuté **depuis le dossier `backend/`**, ou le tableau de bord Fly.io connecté à
+GitHub doit être configuré avec `backend` comme répertoire racine, sinon il ne
+détecte rien.
+
+```bash
+cd backend
+fly launch --copy-config --name lotolabia   # utilise fly.toml existant, ne pas régénérer
+fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... SUPABASE_JWT_SECRET=... \
+  CORS_ORIGINS=https://<domaine>
+fly deploy
+```
 
 Points d'attention :
 - `/docs` (Swagger) est automatiquement désactivé quand `ENVIRONMENT=production` ;
@@ -84,8 +101,11 @@ spécifiques (classification 18+, déclarations) — prévoir la revue en consé
 - [ ] Premier admin promu (`profiles.role='admin'`).
 - [ ] `COLLECTOR_HISTORY_URLS` validées + premier import complet vérifié.
 - [ ] CORS restreint au(x) domaine(s) réel(s).
-- [ ] Placeholders complétés : e-mails de contact (mentions légales, confidentialité,
-      SECURITY.md), raison sociale.
+- [x] E-mails de contact et raison sociale complétés (mentions légales, confidentialité,
+      SECURITY.md, INCIDENT_RESPONSE.md). Restent : forme juridique et adresse du siège.
+- [ ] (Optionnel) Paiement web Stripe : clés renseignées + endpoint webhook créé dans
+      le Dashboard Stripe. Sans compte utilisateur web, aucun parcours d'achat n'est
+      encore exposé sur le site — voir docs/MONETISATION.md.
 - [ ] Environnement GitHub `production` protégé par relecteur requis.
 - [ ] Sauvegardes Supabase vérifiées (et PITR si plan le permettant).
 - [ ] Supervision `/health` + alerte sur jobs `failed`.

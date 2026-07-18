@@ -1,0 +1,32 @@
+# Configuration Fly.io pour l'API LotoLab IA.
+# À lancer depuis le dossier backend/ (fly launch --copy-config), ou en pointant
+# le répertoire racine du monorepo sur « backend » si vous utilisez le tableau
+# de bord Fly.io connecté à GitHub — sinon Fly ne trouve pas ce Dockerfile,
+# situé dans un sous-dossier, pas à la racine du dépôt.
+
+app = "lotolabia"
+primary_region = "cdg"   # Paris — rapproche l'API de Supabase eu-west-3
+
+[build]
+
+[env]
+  ENVIRONMENT = "production"
+  PORT = "8000"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0   # scale-to-zero : reste dans l'offre gratuite, au prix d'un cold start
+
+[[http_service.checks]]
+  path = "/health"
+  interval = "30s"
+  timeout = "5s"
+
+# Secrets à définir via `fly secrets set` (jamais dans ce fichier) :
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET,
+#   CORS_ORIGINS, COLLECTOR_HISTORY_URLS, SCHEDULER_ENABLED=true
+#   SITE_URL, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+#   STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY, STRIPE_PRICE_LIFETIME (optionnel)

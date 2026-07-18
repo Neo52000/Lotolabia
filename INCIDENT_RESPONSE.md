@@ -49,6 +49,6 @@ vérifier `GET /api/v1/admin/status`, contrôler le dernier tirage affiché.
 
 ## Contacts
 
-- Responsable incident : [à compléter]
+- Responsable incident : Reine Elie (reine.elie@gmail.com)
 - Supabase status : status.supabase.com — Netlify status : netlifystatus.com
 - CNIL (notification de violation) : cnil.fr
