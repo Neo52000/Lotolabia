@@ -28,11 +28,12 @@ export default function HeroVisual({
   useEffect(() => {
     let frame: number;
     let interval: ReturnType<typeof setInterval> | undefined;
+    const startCount = Math.floor(TOTAL_COMBOS * 0.62);
     const start = performance.now();
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / TICKER_DURATION_MS);
       const eased = 1 - (1 - t) ** 3;
-      setCount(Math.floor(eased * TOTAL_COMBOS));
+      setCount(Math.floor(startCount + eased * (TOTAL_COMBOS - startCount)));
       if (t < 1) {
         frame = requestAnimationFrame(step);
       } else {

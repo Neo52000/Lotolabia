@@ -134,7 +134,7 @@ export default function GeneratorClient() {
       const response = await fetch(`${API_BASE}/api/v1/me/grids`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ numbers: grid.numbers, chance: grid.chance, method: grid.method }),
+        body: JSON.stringify({ numbers: grid.numbers, chance: grid.chance, method: grid.method ?? method }),
       });
       if (!response.ok) throw new Error();
       setSaveState('saved');

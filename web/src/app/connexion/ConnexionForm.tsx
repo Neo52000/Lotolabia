@@ -31,10 +31,15 @@ export default function ConnexionForm() {
     try {
       const supabase = getAuthClient();
       if (isSignup) {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
         if (signUpError) throw signUpError;
-        setNotice('Compte créé. Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.');
-        setTab('login');
+        if (data.session) {
+          router.push('/generateur');
+          router.refresh();
+        } else {
+          setNotice('Compte créé. Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.');
+          setTab('login');
+        }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;

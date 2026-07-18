@@ -29,7 +29,7 @@ export default function StatsHeatGrid({ datasets }: { datasets: Record<Range, Nu
   const [range, setRange] = useState<Range>('100');
 
   const balls = useMemo(() => {
-    const stats = datasets[range];
+    const stats = datasets[range] ?? [];
     const byNumber = new Map(stats.map((s) => [s.number, s.count ?? 0]));
     const max = Math.max(1, ...stats.map((s) => s.count ?? 0));
     return Array.from({ length: 49 }, (_, i) => {

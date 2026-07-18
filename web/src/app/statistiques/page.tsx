@@ -56,7 +56,7 @@ export default async function StatsHubPage() {
       {hasData ? (
         <>
           <StatsHeatGrid
-            datasets={{ '50': freq50!.numbers, '100': freq100!.numbers, '500': freq500!.numbers }}
+            datasets={{ '50': freq50?.numbers ?? [], '100': freq100?.numbers ?? [], '500': freq500?.numbers ?? [] }}
           />
 
           <div className="grid gap-6 md:grid-cols-3">
