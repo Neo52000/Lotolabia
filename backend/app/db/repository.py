@@ -47,7 +47,13 @@ class Repository(Protocol):
     async def list_profiles(self, page: int, page_size: int) -> tuple[list[dict], int]: ...
     async def set_profile_role(self, user_id: str, role: str) -> None: ...
     async def has_active_premium(self, user_id: str) -> bool: ...
-    async def list_entitlements(self, user_id: str | None = None) -> list[dict]: ...
+    async def list_entitlements(
+        self,
+        user_id: str | None = None,
+        status: str | None = None,
+        product: str | None = None,
+        platform: str | None = None,
+    ) -> list[dict]: ...
     async def get_entitlement_by_receipt_ref(self, receipt_ref: str) -> dict | None: ...
     async def grant_entitlement(self, **fields: Any) -> int: ...
     async def update_entitlement(self, entitlement_id: int, **fields: Any) -> None: ...
@@ -245,9 +251,20 @@ class MemoryRepository:
                 return True
         return False
 
-    async def list_entitlements(self, user_id: str | None = None) -> list[dict]:
+    async def list_entitlements(
+        self,
+        user_id: str | None = None,
+        status: str | None = None,
+        product: str | None = None,
+        platform: str | None = None,
+    ) -> list[dict]:
         return [
-            e for e in self._entitlements.values() if user_id is None or e["user_id"] == user_id
+            e
+            for e in self._entitlements.values()
+            if (user_id is None or e["user_id"] == user_id)
+            and (status is None or e.get("status") == status)
+            and (product is None or e.get("product") == product)
+            and (platform is None or e.get("platform") == platform)
         ]
 
     async def get_entitlement_by_receipt_ref(self, receipt_ref: str) -> dict | None:

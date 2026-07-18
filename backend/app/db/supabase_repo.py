@@ -287,10 +287,22 @@ class SupabaseRepository:
         )
         return bool(rows)
 
-    async def list_entitlements(self, user_id: str | None = None) -> list[dict]:
+    async def list_entitlements(
+        self,
+        user_id: str | None = None,
+        status: str | None = None,
+        product: str | None = None,
+        platform: str | None = None,
+    ) -> list[dict]:
         params: dict = {"select": "*", "order": "created_at.desc"}
         if user_id is not None:
             params["user_id"] = f"eq.{user_id}"
+        if status is not None:
+            params["status"] = f"eq.{status}"
+        if product is not None:
+            params["product"] = f"eq.{product}"
+        if platform is not None:
+            params["platform"] = f"eq.{platform}"
         return await self._select("premium_entitlements", params)
 
     async def get_entitlement_by_receipt_ref(self, receipt_ref: str) -> dict | None:

@@ -267,9 +267,12 @@ class EntitlementGrant(BaseModel):
 @router.get("/premium")
 async def list_premium(
     user_id: str | None = Query(None),
+    status: str | None = Query(None, pattern="^(active|expired|revoked|refunded)$"),
+    product: str | None = Query(None, pattern="^(monthly|yearly|lifetime|trial)$"),
+    platform: str | None = Query(None, pattern="^(google_play|app_store|stripe|manual)$"),
     repository: Repository = Depends(get_repository),
 ) -> list[dict]:
-    return await repository.list_entitlements(user_id)
+    return await repository.list_entitlements(user_id, status, product, platform)
 
 
 @router.post("/premium/grant", status_code=201)
@@ -288,6 +291,26 @@ async def grant_premium(
         expires_at=grant.expires_at,
     )
     return {"id": entitlement_id}
+
+
+class EntitlementUpdate(BaseModel):
+    status: str | None = Field(default=None, pattern="^(active|expired|revoked|refunded)$")
+    product: str | None = Field(default=None, pattern="^(monthly|yearly|lifetime|trial)$")
+    expires_at: str | None = None
+
+
+@router.patch("/premium/{entitlement_id}", status_code=204)
+async def update_premium(
+    entitlement_id: int,
+    update: EntitlementUpdate,
+    admin: AuthUser = Depends(require_admin),
+    repository: Repository = Depends(get_repository),
+) -> None:
+    data = update.model_dump(exclude_unset=True)
+    if not data:
+        raise AppError("empty_update", "Aucune modification fournie.")
+    await _audit(repository, admin, "premium_update", "entitlement", str(entitlement_id), details=data)
+    await repository.update_entitlement(entitlement_id, **data)
 
 
 @router.delete("/premium/{entitlement_id}", status_code=204)

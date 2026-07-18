@@ -60,6 +60,7 @@ export function StatusBadge({ status }: { status: string }) {
     active: 'bg-brand-green/15 text-brand-green',
     revoked: 'bg-brand-pink/15 text-brand-pink',
     expired: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+    refunded: 'bg-brand-pink/15 text-brand-pink',
   };
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${colors[status] ?? 'bg-slate-200 dark:bg-slate-700'}`}>
