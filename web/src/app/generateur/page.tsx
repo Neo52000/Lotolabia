@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 
-import { Breadcrumbs, Disclaimer, Section } from '@/components/ui';
-
 import GeneratorClient from './GeneratorClient';
 
 export const metadata: Metadata = {
@@ -15,15 +13,23 @@ export const metadata: Metadata = {
 
 export default function GeneratorPage() {
   return (
-    <div className="space-y-6">
-      <Breadcrumbs items={[{ label: 'Générateur' }]} />
-      <h1 className="text-2xl font-bold">Générateur de grilles expérimental</h1>
-      <Disclaimer />
-      <Section title="Générer">
-        <GeneratorClient />
-      </Section>
-      <Section title="Comment fonctionnent les méthodes ?">
-        <div className="space-y-3 text-sm opacity-90">
+    <div className="mx-auto max-w-3xl text-center">
+      <h1 className="mb-2.5 font-sora text-3xl font-extrabold tracking-tight sm:text-4xl">Générateur de grilles</h1>
+      <p className="mb-10 text-lg text-[#495064] dark:text-slate-300">
+        Choisis une méthode statistique, génère une grille expérimentale.
+      </p>
+
+      <GeneratorClient />
+
+      <p className="mx-auto mt-8 max-w-xl text-xs leading-relaxed text-[#8A93A6]">
+        ⚠ Toute grille valide conserve la même probabilité théorique de gain, quelle que soit la
+        méthode utilisée. LotoLab IA n&apos;est affilié ni à la FDJ ni à aucun opérateur de jeux.
+        Jeu interdit aux mineurs — 18+.
+      </p>
+
+      <div className="mt-14 rounded-2xl border border-night/[0.08] bg-white p-6 text-left text-sm shadow-[0_6px_24px_rgba(13,27,42,0.05)] dark:border-white/10 dark:bg-slate-900">
+        <h2 className="mb-4 font-sora text-lg font-bold">Comment fonctionnent les méthodes ?</h2>
+        <div className="space-y-3 opacity-90">
           <p>
             <strong>Aléatoire pur</strong> : cinq numéros distincts entre 1 et 49 et un numéro
             Chance entre 1 et 10, tirés uniformément — exactement comme un tirage réel.
@@ -52,7 +58,7 @@ export default function GeneratorPage() {
             que la sauvegarde des grilles sur votre compte.
           </p>
         </div>
-      </Section>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,24 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/) ; versionn
 ## [Non publié]
 
 ### Ajouté
+- **Refonte visuelle « Jackpot »** (`web/`) : nouvelle direction visuelle du site
+  public à partir du handoff de design fourni (dorures, néons, boules de loto
+  animées, polices Sora/Inter) — en-tête et pied de page communs, page
+  d'accueil (hero animé, étapes, tableau de bord chiffré), Statistiques
+  (grille de chaleur des 49 numéros avec filtre 50/100/500 derniers tirages),
+  Générateur (sélecteur de méthode en pastilles, boules avec animation
+  d'apparition). Toutes les données affichées restent réelles (fréquences,
+  retards, paires, tirages archivés) avec repli « données en cours de
+  collecte » à l'identique du reste du site.
+- **Page Premium** (`web/src/app/premium`) : comparatif Free / Premium et
+  bascule mensuel/annuel, reflétant fidèlement la matrice de droits déjà
+  définie côté API (`backend/app/services/premium.py`). Aucune intégration de
+  paiement (Stripe ou autre) n'existe encore côté backend — les CTA renvoient
+  vers la création de compte.
+- **Page Connexion / Inscription** (`web/src/app/connexion`) : connectée au
+  vrai Supabase Auth du projet (`signInWithPassword` / `signUp`), consentement
+  18+ obligatoire à l'inscription. Le générateur permet désormais d'enregistrer
+  une grille sur son compte (`POST /api/v1/me/grids`) une fois connecté.
 - **Production éditoriale automatique** (`backend/app/content/`) : service qui
   produit régulièrement de nouveaux articles de blog à partir des vraies
   statistiques (`app/stats/engine.py`) — aucune donnée inventée. Sujets évergreen
