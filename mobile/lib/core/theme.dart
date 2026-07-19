@@ -28,7 +28,7 @@ ThemeData _base(Brightness brightness) {
       backgroundColor: brightness == Brightness.dark ? BrandColors.nightBlue : Colors.white,
       centerTitle: false,
     ),
-    cardTheme: const CardTheme(
+    cardTheme: const CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
     ),

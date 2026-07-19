@@ -107,7 +107,7 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DropdownButtonFormField<String>(
-                  value: _method,
+                  initialValue: _method,
                   items: [
                     for (final entry in _methods.entries)
                       DropdownMenuItem(value: entry.key, child: Text(entry.value)),
