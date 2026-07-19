@@ -32,29 +32,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     const supabase = getSupabase();
+    let active = true;
 
     async function checkAdminRole(userId: string | undefined) {
       if (!userId) {
-        setIsAdmin(false);
+        if (active) setIsAdmin(false);
         return;
       }
+      if (active) setIsAdmin(null);
       const { data } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', userId)
         .single();
-      setIsAdmin(data?.role === 'admin');
+      if (active) setIsAdmin(data?.role === 'admin');
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSignedIn(Boolean(data.session));
-      checkAdminRole(data.session?.user.id);
-    });
+    // onAuthStateChange déclenche immédiatement son callback avec la session
+    // courante lors de la souscription : getSession() séparé n'est pas nécessaire.
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSignedIn(Boolean(session));
-      checkAdminRole(session?.user.id);
+      if (active) {
+        setSignedIn(Boolean(session));
+        checkAdminRole(session?.user.id);
+      }
     });
-    return () => subscription.subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   async function signIn(event: React.FormEvent) {
