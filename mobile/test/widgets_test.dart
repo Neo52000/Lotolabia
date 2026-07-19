@@ -7,14 +7,18 @@ void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   testWidgets('NumberBall affiche le numéro avec sémantique accessible', (tester) async {
+    final handle = tester.ensureSemantics();
     await tester.pumpWidget(wrap(const NumberBall(number: 42)));
     expect(find.text('42'), findsOneWidget);
     expect(find.bySemanticsLabel('Numéro 42'), findsOneWidget);
+    handle.dispose();
   });
 
   testWidgets('NumberBall Chance a une sémantique distincte', (tester) async {
+    final handle = tester.ensureSemantics();
     await tester.pumpWidget(wrap(const NumberBall(number: 7, isChance: true)));
     expect(find.bySemanticsLabel('Numéro Chance 7'), findsOneWidget);
+    handle.dispose();
   });
 
   testWidgets('WarningBanner affiche l\'avertissement obligatoire', (tester) async {
