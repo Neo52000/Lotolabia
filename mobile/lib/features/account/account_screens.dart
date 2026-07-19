@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config.dart';
 import '../../core/disclaimers.dart';
 import '../../core/widgets.dart';
-import '../../data/models.dart';
 import '../../data/providers.dart';
 import '../../main.dart';
 
@@ -415,36 +414,29 @@ class PreferencesScreen extends ConsumerWidget {
         children: [
           SectionCard(
             title: 'Apparence',
-            child: Column(
-              children: [
-                RadioListTile<ThemeMode>(
-                  title: const Text('Système'),
-                  value: ThemeMode.system,
-                  groupValue: themeMode,
-                  onChanged: (mode) {
-                    ref.read(themeModeProvider.notifier).state = mode!;
-                    save({'theme': 'system'});
-                  },
-                ),
-                RadioListTile<ThemeMode>(
-                  title: const Text('Clair'),
-                  value: ThemeMode.light,
-                  groupValue: themeMode,
-                  onChanged: (mode) {
-                    ref.read(themeModeProvider.notifier).state = mode!;
-                    save({'theme': 'light'});
-                  },
-                ),
-                RadioListTile<ThemeMode>(
-                  title: const Text('Sombre'),
-                  value: ThemeMode.dark,
-                  groupValue: themeMode,
-                  onChanged: (mode) {
-                    ref.read(themeModeProvider.notifier).state = mode!;
-                    save({'theme': 'dark'});
-                  },
-                ),
-              ],
+            child: RadioGroup<ThemeMode>(
+              groupValue: themeMode,
+              onChanged: (mode) {
+                if (mode == null) return;
+                ref.read(themeModeProvider.notifier).state = mode;
+                save({'theme': mode.name});
+              },
+              child: const Column(
+                children: [
+                  RadioListTile<ThemeMode>(
+                    title: Text('Système'),
+                    value: ThemeMode.system,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    title: Text('Clair'),
+                    value: ThemeMode.light,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    title: Text('Sombre'),
+                    value: ThemeMode.dark,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
