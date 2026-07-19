@@ -21,6 +21,7 @@ const NAV = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,9 +32,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     const supabase = getSupabase();
-    supabase.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
+
+    async function checkAdminRole(userId: string | undefined) {
+      if (!userId) {
+        setIsAdmin(false);
+        return;
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      setIsAdmin(data?.role === 'admin');
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSignedIn(Boolean(data.session));
+      checkAdminRole(data.session?.user.id);
+    });
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       setSignedIn(Boolean(session));
+      checkAdminRole(session?.user.id);
     });
     return () => subscription.subscription.unsubscribe();
   }, []);
@@ -89,6 +108,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           Accès réservé aux comptes disposant du rôle administrateur. Toutes les actions sont
           journalisées.
         </p>
+      </div>
+    );
+  }
+
+  if (isAdmin === null) {
+    return <p className="py-16 text-center text-sm opacity-70">Chargement…</p>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto max-w-sm space-y-4 py-12 text-center">
+        <h1 className="text-xl font-bold">Accès réservé aux administrateurs</h1>
+        <p className="text-sm opacity-70">
+          Ce compte est authentifié mais ne dispose pas du rôle administrateur.
+        </p>
+        <button
+          onClick={() => getSupabase().auth.signOut()}
+          className="rounded-lg px-3 py-2 text-sm text-brand-pink hover:underline"
+        >
+          Déconnexion
+        </button>
       </div>
     );
   }
