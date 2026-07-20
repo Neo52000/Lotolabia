@@ -17,6 +17,7 @@ const config: Config = {
         'brand-green': '#22C55E',
         cream: '#FDFBF4',
         gold: { DEFAULT: '#F4C430', light: '#FFE9A8', dark: '#C8940F', deep: '#A8790E' },
+        'ball-blue': { light: '#8FC1FF', DEFAULT: '#2B6CD4', dark: '#123B7A' },
       },
       fontFamily: {
         sora: ['var(--font-sora)', 'sans-serif'],

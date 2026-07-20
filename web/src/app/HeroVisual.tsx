@@ -7,11 +7,11 @@ const TICKER_DURATION_MS = 1400;
 const TICKER_TICK_MS = 1800;
 
 const BALL_STYLES = [
-  'top-3 left-1 h-14 w-14 text-xl bg-[radial-gradient(circle_at_30%_28%,#fff,#E7ECF5_55%,#9AA6BA_100%)] shadow-[0_8px_20px_rgba(0,0,0,0.4)] text-night [animation-delay:0s]',
-  'top-14 right-4 h-12 w-12 text-lg bg-[radial-gradient(circle_at_30%_28%,#fff8dd,#F4C430_60%,#A8790E_100%)] shadow-[0_0_26px_rgba(244,196,48,0.6)] text-night [animation-delay:.6s]',
-  'bottom-16 left-0 h-10 w-10 text-base bg-[radial-gradient(circle_at_30%_28%,#fff8dd,#F4C430_60%,#A8790E_100%)] shadow-[0_0_22px_rgba(244,196,48,0.55)] text-night [animation-delay:1.2s]',
-  'bottom-4 right-16 h-14 w-14 text-xl bg-[radial-gradient(circle_at_30%_28%,#fff,#E7ECF5_55%,#9AA6BA_100%)] shadow-[0_8px_20px_rgba(0,0,0,0.4)] text-night [animation-delay:.3s]',
-  'top-40 right-0 h-9 w-9 text-sm bg-[radial-gradient(circle_at_30%_28%,#fff0f6,#FF7BAA_60%,#C81C63_100%)] shadow-[0_0_20px_rgba(255,77,141,0.55)] text-[#4A0A26] [animation-delay:.9s]',
+  { pos: 'top-3 left-1 h-14 w-14 [animation-delay:0s]', inner: 'h-9 w-9 text-lg', sphere: 'bg-[radial-gradient(circle_at_30%_28%,#8FC1FF,#2B6CD4_55%,#123B7A_100%)] shadow-[0_8px_20px_rgba(18,59,122,0.5)]' },
+  { pos: 'top-14 right-4 h-12 w-12 [animation-delay:.6s]', inner: 'h-8 w-8 text-base', sphere: 'bg-[radial-gradient(circle_at_30%_28%,#8FC1FF,#2B6CD4_55%,#123B7A_100%)] shadow-[0_0_26px_rgba(43,108,212,0.5)]' },
+  { pos: 'bottom-16 left-0 h-10 w-10 [animation-delay:1.2s]', inner: 'h-7 w-7 text-sm', sphere: 'bg-[radial-gradient(circle_at_30%_28%,#fff8dd,#F4C430_60%,#A8790E_100%)] shadow-[0_0_22px_rgba(244,196,48,0.55)]' },
+  { pos: 'bottom-4 right-16 h-14 w-14 [animation-delay:.3s]', inner: 'h-9 w-9 text-lg', sphere: 'bg-[radial-gradient(circle_at_30%_28%,#8FC1FF,#2B6CD4_55%,#123B7A_100%)] shadow-[0_8px_20px_rgba(18,59,122,0.5)]' },
+  { pos: 'top-40 right-0 h-9 w-9 [animation-delay:.9s]', inner: 'h-6 w-6 text-xs', sphere: 'bg-[radial-gradient(circle_at_30%_28%,#fff0f6,#FF7BAA_60%,#C81C63_100%)] shadow-[0_0_20px_rgba(255,77,141,0.55)]' },
 ];
 
 export default function HeroVisual({
@@ -55,9 +55,13 @@ export default function HeroVisual({
         <div
           key={n}
           aria-hidden="true"
-          className={`animate-float absolute hidden items-center justify-center rounded-full font-sora font-extrabold sm:flex ${BALL_STYLES[index]}`}
+          className={`animate-float absolute hidden items-center justify-center rounded-full sm:flex ${BALL_STYLES[index].pos} ${BALL_STYLES[index].sphere}`}
         >
-          {n}
+          <span
+            className={`flex items-center justify-center rounded-full bg-white font-sora font-extrabold text-night shadow-inner ${BALL_STYLES[index].inner}`}
+          >
+            {n}
+          </span>
         </div>
       ))}
 
