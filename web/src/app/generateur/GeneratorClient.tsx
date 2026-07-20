@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { generateGrids, type GeneratorMethod } from '@/lib/generatorFallback';
 import { supabaseAllDraws } from '@/lib/supabasePublic';
 import { authConfigured, getAccessToken, getAuthClient } from '@/lib/authClient';
+import { NumberBall } from '@/components/ui';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -224,17 +225,10 @@ export default function GeneratorClient() {
           grids.slice(0, 1).map((grid, index) => (
             <div key={index} className="mb-6 flex flex-wrap justify-center gap-3.5">
               {grid.numbers.map((n) => (
-                <div
-                  key={`${index}-${n}`}
-                  className="animate-pop-in flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_28%,#fff8dd,#F4C430_60%,#A8790E_100%)] font-sora text-xl font-extrabold text-night shadow-[0_6px_18px_rgba(244,196,48,0.45)]"
-                >
-                  {n}
-                </div>
+                <NumberBall key={`${index}-${n}`} n={n} size="lg" className="animate-pop-in" />
               ))}
               <div className="w-5" />
-              <div className="animate-pop-in flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_28%,#fff0f6,#FF7BAA_60%,#C81C63_100%)] font-sora text-xl font-extrabold text-[#4A0A26] shadow-[0_6px_18px_rgba(255,77,141,0.45)]">
-                {grid.chance}
-              </div>
+              <NumberBall n={grid.chance} chance size="lg" className="animate-pop-in" />
             </div>
           ))
         )}
@@ -299,13 +293,9 @@ export default function GeneratorClient() {
             {grids.slice(1).map((grid, index) => (
               <div key={index} className="flex flex-wrap justify-center gap-2 text-sm">
                 {grid.numbers.map((n) => (
-                  <span key={n} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gold/20 font-semibold">
-                    {n}
-                  </span>
+                  <NumberBall key={n} n={n} size="sm" />
                 ))}
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-pink/20 font-semibold">
-                  {grid.chance}
-                </span>
+                <NumberBall n={grid.chance} chance size="sm" />
               </div>
             ))}
           </div>

@@ -2,20 +2,53 @@ import Link from 'next/link';
 
 import { DISCLAIMER, INDEPENDENCE, type Draw, type NumberStat } from '@/lib/api';
 
-export function NumberBall({ n, chance = false, size = 'md' }: { n: number; chance?: boolean; size?: 'sm' | 'md' }) {
-  const dimension = size === 'sm' ? 'h-8 w-8 text-xs' : 'h-11 w-11 text-base';
-  const color = chance ? 'bg-accent' : 'bg-primary';
+const BALL_DIMENSIONS = {
+  sm: 'h-8 w-8',
+  md: 'h-11 w-11',
+  lg: 'h-[60px] w-[60px]',
+} as const;
+
+const BALL_INNER_DIMENSIONS = {
+  sm: 'h-5 w-5 text-[10px]',
+  md: 'h-7 w-7 text-sm',
+  lg: 'h-9 w-9 text-lg',
+} as const;
+
+const BALL_SPHERE = {
+  main: 'bg-[radial-gradient(circle_at_30%_28%,#8FC1FF,#2B6CD4_55%,#123B7A_100%)] shadow-[0_4px_10px_rgba(18,59,122,0.45)]',
+  chance:
+    'bg-[radial-gradient(circle_at_30%_28%,#fff0f6,#FF7BAA_55%,#C81C63_100%)] shadow-[0_4px_10px_rgba(200,28,99,0.45)]',
+} as const;
+
+/** Boule de tirage : sphère glossy avec pastille blanche centrale (chiffre en noir), comme les vraies boules de tirage. */
+export function NumberBall({
+  n,
+  chance = false,
+  size = 'md',
+  className = '',
+}: {
+  n: number;
+  chance?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}) {
   return (
     <span
       aria-label={chance ? `Numéro Chance ${n}` : `Numéro ${n}`}
-      className={`inline-flex items-center justify-center rounded-full font-bold text-white ${color} ${dimension}`}
+      className={`inline-flex items-center justify-center rounded-full ${BALL_DIMENSIONS[size]} ${
+        chance ? BALL_SPHERE.chance : BALL_SPHERE.main
+      } ${className}`}
     >
-      {n}
+      <span
+        className={`flex items-center justify-center rounded-full bg-white font-sora font-bold text-night shadow-inner ${BALL_INNER_DIMENSIONS[size]}`}
+      >
+        {n}
+      </span>
     </span>
   );
 }
 
-export function DrawBalls({ draw, size = 'md' }: { draw: Draw; size?: 'sm' | 'md' }) {
+export function DrawBalls({ draw, size = 'md' }: { draw: Draw; size?: 'sm' | 'md' | 'lg' }) {
   return (
     <span className="flex flex-wrap items-center gap-2">
       {draw.numbers.map((n) => (

@@ -14,15 +14,15 @@ const RANGES: { value: Range; label: string }[] = [
 
 function tierClasses(ratio: number): string {
   if (ratio >= 0.78) {
-    return 'bg-gradient-to-br from-gold-light via-gold to-gold-dark border-gold/60 text-[#5A3F00] shadow-[0_0_14px_rgba(244,196,48,0.5)]';
+    return 'bg-gradient-to-br from-gold-light via-gold to-gold-dark shadow-[0_4px_12px_rgba(244,196,48,0.5)]';
   }
   if (ratio >= 0.5) {
-    return 'bg-gradient-to-br from-[#FFF6DE] to-gold-light border-gold/35 text-[#7A5A00]';
+    return 'bg-gradient-to-br from-[#FFF6DE] to-gold-light shadow-[0_4px_10px_rgba(244,196,48,0.3)]';
   }
   if (ratio >= 0.3) {
-    return 'bg-[#EEF1F6] border-night/10 text-[#495064] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300';
+    return 'bg-gradient-to-br from-[#EEF1F6] to-[#D3D9E4] shadow-[0_4px_8px_rgba(13,27,42,0.15)] dark:from-slate-700 dark:to-slate-800';
   }
-  return 'bg-gradient-to-br from-[#EFE1FA] to-[#D9C7F0] border-brand-violet/30 text-[#5A3F82]';
+  return 'bg-gradient-to-br from-[#EFE1FA] to-[#D9C7F0] shadow-[0_4px_8px_rgba(157,78,221,0.25)]';
 }
 
 export default function StatsHeatGrid({ datasets }: { datasets: Record<Range, NumberStat[]> }) {
@@ -78,9 +78,11 @@ export default function StatsHeatGrid({ datasets }: { datasets: Record<Range, Nu
             <div
               key={ball.n}
               title={`Numéro ${ball.n} — ${ball.count} sorties`}
-              className={`flex aspect-square items-center justify-center rounded-full border font-sora text-sm font-bold ${tierClasses(ball.ratio)}`}
+              className={`flex aspect-square items-center justify-center rounded-full ${tierClasses(ball.ratio)}`}
             >
-              {ball.n}
+              <span className="flex h-[68%] w-[68%] items-center justify-center rounded-full bg-white font-sora text-sm font-bold text-night shadow-inner dark:bg-slate-950 dark:text-slate-100">
+                {ball.n}
+              </span>
             </div>
           ))}
         </div>
