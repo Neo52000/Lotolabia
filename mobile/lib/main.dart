@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config.dart';
+import 'core/secure_local_storage.dart';
 import 'core/theme.dart';
 import 'router.dart';
 
@@ -12,6 +13,7 @@ Future<void> main() async {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       publishableKey: AppConfig.supabaseAnonKey,
+      authOptions: FlutterAuthClientOptions(localStorage: SecureLocalStorage()),
     );
   }
   final onboardingDone = await hasSeenOnboarding();
