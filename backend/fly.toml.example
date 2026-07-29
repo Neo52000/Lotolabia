@@ -17,7 +17,7 @@ primary_region = "cdg"   # Paris — rapproche l'API de Supabase eu-west-3
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 1   # instance toujours active (voir note SCHEDULER_ENABLED ci-dessous)
 
 [[http_service.checks]]
   path = "/health"
@@ -26,4 +26,15 @@ primary_region = "cdg"   # Paris — rapproche l'API de Supabase eu-west-3
 
 # Secrets à définir via `fly secrets set` (jamais dans ce fichier) :
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET,
-#   CORS_ORIGINS, COLLECTOR_HISTORY_URLS, SCHEDULER_ENABLED=true
+#   CORS_ORIGINS, COLLECTOR_HISTORY_URLS
+#   SITE_URL, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+#   STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY, STRIPE_PRICE_LIFETIME (optionnel)
+#
+# Deux façons de déclencher la synchronisation des tirages, voir
+# docs/IMPORT_AUTOMATIQUE.md :
+#   - min_machines_running = 1 (ci-dessus) + SCHEDULER_ENABLED=true : planificateur
+#     interne (APScheduler), horaires Europe/Paris exacts, coût d'une machine always-on.
+#   - min_machines_running = 0 (scale-to-zero, voir fly.toml réel du projet) +
+#     COLLECTOR_CRON_SECRET + .github/workflows/collector-sync.yml : gratuit, la
+#     machine est réveillée à la demande par le cron GitHub Actions.
+# Ne pas activer les deux mécanismes en même temps.
