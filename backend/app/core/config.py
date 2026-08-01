@@ -58,6 +58,15 @@ class Settings(BaseSettings):
     collector_retry_backoff_seconds: int = 60
     scheduler_enabled: bool = False
     scheduler_timezone: str = "Europe/Paris"
+    collector_cron_secret: str = Field(
+        default="",
+        description=(
+            "Secret partagé pour déclencher la synchronisation depuis un appel "
+            "externe planifié (ex. cron GitHub Actions), utile quand l'instance "
+            "API est en scale-to-zero et ne peut donc pas porter de planificateur "
+            "interne. Endpoint désactivé (404) tant que ce secret n'est pas défini."
+        ),
+    )
 
     # --- Cache --------------------------------------------------------------
     cache_ttl_seconds: int = 300

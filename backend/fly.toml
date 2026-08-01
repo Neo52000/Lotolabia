@@ -27,6 +27,13 @@ primary_region = "cdg"   # Paris — rapproche l'API de Supabase eu-west-3
 
 # Secrets à définir via `fly secrets set` (jamais dans ce fichier) :
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET,
-#   CORS_ORIGINS, COLLECTOR_HISTORY_URLS, SCHEDULER_ENABLED=true
+#   CORS_ORIGINS, COLLECTOR_HISTORY_URLS
 #   SITE_URL, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
 #   STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY, STRIPE_PRICE_LIFETIME (optionnel)
+#
+# Avec min_machines_running = 0 ci-dessus (scale-to-zero), NE PAS mettre
+# SCHEDULER_ENABLED=true : aucune instance ne tourne en continu pour porter le
+# planificateur interne à l'heure prévue. Utiliser à la place le cron GitHub
+# Actions (.github/workflows/collector-sync.yml) qui réveille la machine à la
+# demande, avec COLLECTOR_CRON_SECRET défini ici ET dans les secrets GitHub.
+#   COLLECTOR_CRON_SECRET (ex. `openssl rand -hex 32`)

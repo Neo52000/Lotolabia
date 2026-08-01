@@ -51,7 +51,28 @@ COLLECTOR_RETRY_BACKOFF_SECONDS=60
 | Après un échec | Retries avec backoff exponentiel (60 s, 120 s, 240 s…) jusqu'à `COLLECTOR_MAX_RETRIES`, puis **alerte administrateur** (job `failed` + log niveau error visibles dans le back-office) |
 
 Bouton **« Synchroniser maintenant »** dans le back-office (`POST /api/v1/admin/sync`,
-action journalisée).
+action journalisée, JWT admin requis).
+
+### Deux façons de déclencher le calendrier ci-dessus
+
+1. **Planificateur interne** (`SyncScheduler`, APScheduler) : actif uniquement si
+   `SCHEDULER_ENABLED=true`. Nécessite qu'**une** instance de l'API tourne en continu —
+   incompatible avec `fly.toml` en scale-to-zero (`min_machines_running = 0`), puisqu'aucun
+   processus n'est alors actif à 22 h 30 pour déclencher le job.
+2. **Cron GitHub Actions** (`.github/workflows/collector-sync.yml`, recommandé en
+   scale-to-zero) : le workflow planifié appelle `POST /api/v1/cron/sync`, un endpoint
+   dédié authentifié par secret partagé (`COLLECTOR_CRON_SECRET`, jamais par JWT), ce qui
+   réveille la machine Fly à la demande. Les cron GitHub Actions étant fixés en UTC (pas
+   d'awareness de fuseau horaire), le workflow planifie **deux appels par créneau** (un
+   pour l'heure d'été, un pour l'heure d'hiver) ; l'appel superflu est sans risque grâce
+   au dédoublonnage sur `draw_date + draw_type`. Configuration requise dans le dépôt
+   GitHub (Settings → Secrets and variables → Actions) :
+   - Variable `COLLECTOR_API_BASE_URL` (ex. `https://lotolabia.fly.dev`)
+   - Secret `COLLECTOR_CRON_SECRET` (même valeur que côté API, définie via
+     `fly secrets set COLLECTOR_CRON_SECRET=...`)
+
+   Ne pas activer les deux mécanismes simultanément sur la même instance (double
+   synchronisation inutile, sans risque de corruption mais redondante).
 
 ## Pipeline d'un import
 
