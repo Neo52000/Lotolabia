@@ -1,6 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lotolabia-backend"
+version = "0.1.0"
+description = "LotoLab IA - Backend API with FastAPI, Supabase, and statistical analysis"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Private"}
+authors = [
+    {name = "LotoLab IA Team", email = "contact@lotolabia.fr"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: FastAPI",
+    "Framework :: Pydantic",
+]
+
+dependencies = [
+    "fastapi>=0.115.14",
+    "uvicorn[standard]>=0.34.3",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "python-multipart>=0.0.20",
+    "httpx>=0.28.1",
+    "supabase>=2.17.0",
+    "PyJWT[crypto]>=2.10.1",
+    "slowapi>=0.1.9",
+    "APScheduler>=3.11.0",
+    "reportlab>=4.4.2",
+    "stripe>=15.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "lotolabia-backend[test]",
+    "ruff>=0.12.3",
+    "mypy>=1.16.1",
+    "locust>=2.37.10",
+]
+test = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short"
 
 [tool.ruff]
 line-length = 100
@@ -8,9 +62,19 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
-ignore = ["E501", "B008"]  # B008 : pattern officiel FastAPI (Depends en défaut)
+ignore = ["E501", "B008"]  # B008: FastAPI default pattern (Depends)
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
 check_untyped_defs = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
