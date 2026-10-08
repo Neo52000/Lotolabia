@@ -1,20 +1,20 @@
 name: Synchronisation planifiée des tirages
 
-# Déclenche POST /api/v1/cron/sync sur l'API de production. Solution retenue
-# pour rester compatible avec le scale-to-zero de fly.toml (min_machines_running
-# = 0) : contrairement au planificateur interne (APScheduler, SCHEDULER_ENABLED),
-# ce workflow ne dépend d'aucune instance déjà en cours d'exécution — l'appel
-# HTTP réveille la machine Fly à la demande.
+# Exécute directement backend/scripts/run_scheduled_sync.py dans ce runner,
+# contre Supabase (clé service role) : CollectorService ne dépend pas du
+# serveur FastAPI, donc aucune API hébergée en continu n'est nécessaire
+# (pas de Fly.io, pas de SCHEDULER_ENABLED, pas de secret cron HTTP).
 #
 # Deux horaires par créneau (été/hiver) car les cron GitHub Actions sont fixés
 # en UTC, sans awareness de fuseau ni changement d'heure. L'appel « en trop »
 # est sans risque : la synchronisation est idempotente (dédoublonnage sur
 # draw_date + draw_type) et le contrôle du lendemain rattrape tout retard.
 #
-# Prérequis (Settings → Secrets and variables → Actions) :
-#   - Variable COLLECTOR_API_BASE_URL (ex. https://lotolabia.fly.dev)
-#   - Secret   COLLECTOR_CRON_SECRET (même valeur que COLLECTOR_CRON_SECRET
-#              défini côté API via `fly secrets set`)
+# Prérequis (Settings → Secrets and variables → Actions → Secrets) :
+#   - SUPABASE_URL
+#   - SUPABASE_SERVICE_ROLE_KEY
+#   - COLLECTOR_HISTORY_URLS (URLs réelles des fichiers officiels — voir
+#     docs/IMPORT_AUTOMATIQUE.md)
 
 on:
   schedule:
@@ -28,19 +28,29 @@ on:
 
 jobs:
   sync:
-    name: Déclencher la synchronisation
+    name: Exécuter la synchronisation
     runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: backend }
     steps:
-      - name: Appeler POST /api/v1/cron/sync
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+
+      - name: Vérifier la configuration
         run: |
-          if [ -z "$API_BASE_URL" ] || [ -z "$CRON_SECRET" ]; then
-            echo "::error::COLLECTOR_API_BASE_URL ou COLLECTOR_CRON_SECRET non configuré — voir le commentaire en tête de ce workflow."
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY non configuré — voir le commentaire en tête de ce workflow."
             exit 1
           fi
-          curl --fail --show-error --silent \
-            --max-time 60 \
-            -X POST "$API_BASE_URL/api/v1/cron/sync" \
-            -H "X-Cron-Secret: $CRON_SECRET"
+
+      - name: Synchroniser les tirages
+        run: python scripts/run_scheduled_sync.py
         env:
-          API_BASE_URL: ${{ vars.COLLECTOR_API_BASE_URL }}
-          CRON_SECRET: ${{ secrets.COLLECTOR_CRON_SECRET }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          COLLECTOR_HISTORY_URLS: ${{ secrets.COLLECTOR_HISTORY_URLS }}
