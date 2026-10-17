@@ -32,6 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run: { working-directory: backend }
+    # Au niveau du job : l'étape de vérification doit voir les mêmes variables
+    # que le script, sinon elle échoue même avec les secrets configurés.
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      COLLECTOR_HISTORY_URLS: ${{ secrets.COLLECTOR_HISTORY_URLS }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,7 +56,3 @@ jobs:
 
       - name: Synchroniser les tirages
         run: python scripts/run_scheduled_sync.py
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          COLLECTOR_HISTORY_URLS: ${{ secrets.COLLECTOR_HISTORY_URLS }}
