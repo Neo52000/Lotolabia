@@ -60,6 +60,15 @@ def test_format_change_detection():
         parse_results_file(changed.encode("utf-8"))
 
 
+def test_html_page_rejected_with_explicit_message():
+    # Cas réel : l'URL de la page historique au lieu du lien de téléchargement du fichier.
+    page = '<!doctype html><html lang="fr"><head><meta charset="utf-8"/></head><body></body></html>'
+    with pytest.raises(ParserError) as excinfo:
+        parse_results_file(("\n  " + page).encode("utf-8"))
+    assert not isinstance(excinfo.value, FormatChangeError)
+    assert "page web" in str(excinfo.value)
+
+
 def test_empty_file_rejected():
     with pytest.raises(ParserError):
         parse_results_file(b"")
