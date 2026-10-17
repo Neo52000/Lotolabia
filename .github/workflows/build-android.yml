@@ -4,11 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       api_base_url:
-        description: URL de l'API de production
-        required: true
-        default: https://api.exemple.invalid
+        description: URL de l'API (laisser vide si aucune API n'est hébergée — l'appli lit alors Supabase en direct)
+        required: false
+        default: ''
   push:
     tags: ['v*']
+
+# Valeurs par défaut du projet Supabase lotolab-ia, utilisées si les variables
+# de dépôt SUPABASE_URL / SUPABASE_ANON_KEY ne sont pas définies. La clé « anon »
+# est publique par conception (elle est embarquée dans l'appli et dans le site) :
+# la sécurité repose sur la RLS (lecture seule publique sur `draws`).
+env:
+  DEFAULT_SUPABASE_URL: https://kasapoqvsravyuejjjdq.supabase.co
+  DEFAULT_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imthc2Fwb3F2c3Jhdnl1ZWpqamRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwNDYwODYsImV4cCI6MjA5OTYyMjA4Nn0.z48m8DGwSab7mvV22MSQm6XtZF548sRTMKj5MNLxqEs
 
 jobs:
   appbundle:
@@ -46,9 +54,9 @@ jobs:
       - name: Build appbundle
         run: |
           flutter build appbundle --release \
-            --dart-define=API_BASE_URL=${{ inputs.api_base_url || vars.API_BASE_URL || 'https://api.exemple.invalid' }} \
-            --dart-define=SUPABASE_URL=${{ vars.SUPABASE_URL || '' }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ vars.SUPABASE_ANON_KEY || '' }}
+            --dart-define=API_BASE_URL=${{ inputs.api_base_url || vars.API_BASE_URL || '' }} \
+            --dart-define=SUPABASE_URL=${{ vars.SUPABASE_URL || env.DEFAULT_SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ vars.SUPABASE_ANON_KEY || env.DEFAULT_SUPABASE_ANON_KEY }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -95,9 +103,9 @@ jobs:
       - name: Build apk
         run: |
           flutter build apk --release \
-            --dart-define=API_BASE_URL=${{ inputs.api_base_url || vars.API_BASE_URL || 'https://api.exemple.invalid' }} \
-            --dart-define=SUPABASE_URL=${{ vars.SUPABASE_URL || '' }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ vars.SUPABASE_ANON_KEY || '' }}
+            --dart-define=API_BASE_URL=${{ inputs.api_base_url || vars.API_BASE_URL || '' }} \
+            --dart-define=SUPABASE_URL=${{ vars.SUPABASE_URL || env.DEFAULT_SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ vars.SUPABASE_ANON_KEY || env.DEFAULT_SUPABASE_ANON_KEY }}
 
       - uses: actions/upload-artifact@v4
         with:

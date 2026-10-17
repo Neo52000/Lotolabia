@@ -42,15 +42,15 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
       _premiumRequired = false;
     });
     try {
-      final api = ref.read(apiClientProvider);
       final seed = int.tryParse(_seedController.text);
-      final response = await api.postJson('/api/v1/generator', {
-        'method': _method,
-        'count': _count,
-        if (seed != null) 'seed': seed,
-        'excluded_numbers': _excluded.toList(),
-        'favorite_numbers': _favorites.toList(),
-      });
+      final response = await generateGrids(
+        ref,
+        method: _method,
+        count: _count,
+        seed: seed,
+        excludedNumbers: _excluded.toList(),
+        favoriteNumbers: _favorites.toList(),
+      );
       setState(() {
         _grids = (response['grids'] as List)
             .map((grid) => GeneratedGrid.fromJson(grid as Map<String, dynamic>))

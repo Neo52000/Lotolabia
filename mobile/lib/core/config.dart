@@ -12,4 +12,8 @@ class AppConfig {
 
   static bool get supabaseConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+
+  /// Vide (`--dart-define=API_BASE_URL=`) quand aucune API n'est hébergée :
+  /// l'appli lit alors directement Supabase et calcule les statistiques en local.
+  static bool get apiConfigured => apiBaseUrl.isNotEmpty;
 }
