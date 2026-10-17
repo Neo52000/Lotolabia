@@ -53,26 +53,34 @@ COLLECTOR_RETRY_BACKOFF_SECONDS=60
 Bouton **« Synchroniser maintenant »** dans le back-office (`POST /api/v1/admin/sync`,
 action journalisée, JWT admin requis).
 
-### Deux façons de déclencher le calendrier ci-dessus
+### Trois façons de déclencher le calendrier ci-dessus
 
-1. **Planificateur interne** (`SyncScheduler`, APScheduler) : actif uniquement si
+1. **Cron GitHub Actions, sans API hébergée** (`.github/workflows/collector-sync.yml`,
+   **méthode par défaut**, aucun hébergement d'API requis) : le workflow planifié
+   installe les dépendances Python et exécute directement
+   `backend/scripts/run_scheduled_sync.py` dans le runner GitHub, contre Supabase (clé
+   service role). `CollectorService` ne dépend pas du serveur FastAPI, donc il n'y a ni
+   Fly.io, ni `SCHEDULER_ENABLED`, ni secret cron HTTP à gérer — seulement les
+   identifiants Supabase. Les cron GitHub Actions étant fixés en UTC (pas d'awareness de
+   fuseau horaire), le workflow planifie **deux appels par créneau** (un pour l'heure
+   d'été, un pour l'heure d'hiver) ; l'appel superflu est sans risque grâce au
+   dédoublonnage sur `draw_date + draw_type`. Configuration requise dans le dépôt GitHub
+   (Settings → Secrets and variables → Actions → Secrets) :
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `COLLECTOR_HISTORY_URLS`
+2. **Cron GitHub Actions vers une API déployée** (`POST /api/v1/cron/sync`, endpoint
+   dédié authentifié par secret partagé `COLLECTOR_CRON_SECRET`, jamais par JWT) : utile
+   si une API est de toute façon déployée (ex. Fly.io en scale-to-zero) et qu'on préfère
+   déclencher la synchro via un appel HTTP qui réveille la machine à la demande plutôt
+   que d'exécuter le script dans le runner. Non utilisé par défaut.
+3. **Planificateur interne** (`SyncScheduler`, APScheduler) : actif uniquement si
    `SCHEDULER_ENABLED=true`. Nécessite qu'**une** instance de l'API tourne en continu —
-   incompatible avec `fly.toml` en scale-to-zero (`min_machines_running = 0`), puisqu'aucun
-   processus n'est alors actif à 22 h 30 pour déclencher le job.
-2. **Cron GitHub Actions** (`.github/workflows/collector-sync.yml`, recommandé en
-   scale-to-zero) : le workflow planifié appelle `POST /api/v1/cron/sync`, un endpoint
-   dédié authentifié par secret partagé (`COLLECTOR_CRON_SECRET`, jamais par JWT), ce qui
-   réveille la machine Fly à la demande. Les cron GitHub Actions étant fixés en UTC (pas
-   d'awareness de fuseau horaire), le workflow planifie **deux appels par créneau** (un
-   pour l'heure d'été, un pour l'heure d'hiver) ; l'appel superflu est sans risque grâce
-   au dédoublonnage sur `draw_date + draw_type`. Configuration requise dans le dépôt
-   GitHub (Settings → Secrets and variables → Actions) :
-   - Variable `COLLECTOR_API_BASE_URL` (ex. `https://lotolabia.fly.dev`)
-   - Secret `COLLECTOR_CRON_SECRET` (même valeur que côté API, définie via
-     `fly secrets set COLLECTOR_CRON_SECRET=...`)
+   incompatible avec un déploiement en scale-to-zero, puisqu'aucun processus n'est alors
+   actif à 22 h 30 pour déclencher le job.
 
-   Ne pas activer les deux mécanismes simultanément sur la même instance (double
-   synchronisation inutile, sans risque de corruption mais redondante).
+   Ne pas activer plusieurs mécanismes simultanément (double synchronisation inutile,
+   sans risque de corruption mais redondante).
 
 ## Pipeline d'un import
 
