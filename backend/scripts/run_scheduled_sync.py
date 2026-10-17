@@ -35,7 +35,7 @@ async def main() -> int:
     repository = SupabaseRepository(settings.supabase_url, settings.supabase_service_role_key)
     collector = CollectorService(repository, settings)
     try:
-        result = await collector.run_scheduled_sync(triggered_by="github_actions_script")
+        result = await collector.run_scheduled_sync(triggered_by="scheduler")
     finally:
         await repository.aclose()
 

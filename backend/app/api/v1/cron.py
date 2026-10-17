@@ -38,6 +38,6 @@ async def cron_sync(
         raise UnauthorizedError("Secret cron invalide.")
 
     collector = get_collector(request)
-    result = await collector.run_scheduled_sync(triggered_by="github_actions_cron")
+    result = await collector.run_scheduled_sync(triggered_by="scheduler")
     logger.info("Synchronisation déclenchée par cron externe : %s", result.get("status"))
     return result

@@ -15,6 +15,10 @@ from typing import Any, Protocol
 from ..core.errors import ConflictError, NotFoundError
 from ..schemas.draws import Draw, DrawCreate
 
+# Miroir de la contrainte import_jobs_triggered_by_check
+# (supabase/migrations/0001_draws_and_imports.sql).
+ALLOWED_IMPORT_TRIGGERS = {"scheduler", "manual", "admin", "retry"}
+
 
 class Repository(Protocol):
     # --- Tirages ---
@@ -175,6 +179,9 @@ class MemoryRepository:
 
     # --- Pipeline d'import ---
     async def create_import_job(self, **fields: Any) -> int:
+        triggered_by = fields.get("triggered_by", "scheduler")
+        if triggered_by not in ALLOWED_IMPORT_TRIGGERS:
+            raise ValueError(f"triggered_by refusé par la base : {triggered_by!r}")
         job_id = next(self._ids)
         self._jobs[job_id] = {"id": job_id, "created_at": _utcnow(), "status": "pending", **fields}
         return job_id
