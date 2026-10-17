@@ -172,3 +172,10 @@ class ApiException implements Exception {
   @override
   String toString() => message;
 }
+
+/// L'API n'est pas configurée ou ne répond pas : seul cas où l'appli bascule
+/// sur la lecture directe de Supabase. Une vraie réponse d'erreur de l'API
+/// (4xx/5xx) reste une [ApiException] et ne déclenche aucun repli.
+class ApiUnreachableException extends ApiException {
+  const ApiUnreachableException(super.message);
+}

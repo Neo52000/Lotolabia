@@ -38,6 +38,7 @@ class ApiClient {
     Map<String, dynamic>? query,
     bool cacheable = true,
   }) async {
+    _ensureConfigured();
     lastResponseFromCache = false;
     final cacheKey = 'api-cache:$path:${jsonEncode(query ?? {})}';
     try {
@@ -64,6 +65,7 @@ class ApiClient {
   }
 
   Future<List<dynamic>> getJsonList(String path, {Map<String, dynamic>? query}) async {
+    _ensureConfigured();
     try {
       final response = await _dio.get<List<dynamic>>(path, queryParameters: query, options: _options);
       return response.data ?? [];
@@ -73,6 +75,7 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> postJson(String path, Map<String, dynamic> body) async {
+    _ensureConfigured();
     try {
       final response = await _dio.post<Map<String, dynamic>>(path, data: body, options: _options);
       return response.data ?? {};
@@ -82,6 +85,7 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> putJson(String path, Map<String, dynamic> body) async {
+    _ensureConfigured();
     try {
       final response = await _dio.put<Map<String, dynamic>>(path, data: body, options: _options);
       return response.data ?? {};
@@ -91,11 +95,19 @@ class ApiClient {
   }
 
   Future<void> delete(String path, {Map<String, dynamic>? body}) async {
+    _ensureConfigured();
     try {
       await _dio.delete<void>(path, data: body, options: _options);
     } on DioException catch (error) {
       throw _mapError(error);
     }
+  }
+
+  static const unavailableMessage =
+      'Cette fonction nécessite le serveur LotoLab IA, qui n\'est pas encore en ligne.';
+
+  void _ensureConfigured() {
+    if (!AppConfig.apiConfigured) throw const ApiUnreachableException(unavailableMessage);
   }
 
   bool _isNetworkIssue(DioException error) =>
@@ -110,7 +122,7 @@ class ApiClient {
     if (data is Map && data['error'] is Map) {
       message = (data['error']['message'] ?? message) as String;
     } else if (_isNetworkIssue(error)) {
-      message = 'Connexion impossible. Vérifiez votre réseau.';
+      return const ApiUnreachableException('Connexion impossible. Vérifiez votre réseau.');
     }
     if (status == 402) return PremiumRequiredException(message);
     return ApiException(message, statusCode: status);

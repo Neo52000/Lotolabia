@@ -26,9 +26,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
       _error = null;
     });
     try {
-      final api = ref.read(apiClientProvider);
-      final result =
-          await api.getJson('/api/v1/stats/monte-carlo', query: {'iterations': 10000});
+      final result = await runMonteCarlo(ref, iterations: 10000);
       setState(() => _monteCarlo = result);
     } on Exception catch (error) {
       setState(() => _error = '$error');
