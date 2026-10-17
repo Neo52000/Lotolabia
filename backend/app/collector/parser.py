@@ -114,6 +114,11 @@ def parse_results_file(content: bytes) -> ParseResult:
 
     if not text.strip():
         raise ParserError("Fichier vide.")
+    if text.lstrip()[:15].lower().startswith(("<!doctype html", "<html")):
+        raise ParserError(
+            "La source est une page web (HTML), pas un fichier CSV/ZIP : renseignez dans "
+            "COLLECTOR_HISTORY_URLS le lien de téléchargement du fichier, pas l'adresse de la page."
+        )
 
     delimiter = _detect_delimiter(text)
     reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
