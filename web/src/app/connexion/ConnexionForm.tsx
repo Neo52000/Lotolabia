@@ -7,6 +7,12 @@ import { authConfigured, getAuthClient } from '@/lib/authClient';
 
 type Tab = 'login' | 'signup';
 
+/** Destination après connexion (`?next=/premium`), limitée aux chemins internes. */
+function nextPath(): string {
+  const next = new URLSearchParams(window.location.search).get('next') ?? '';
+  return next.startsWith('/') && !next.startsWith('//') ? next : '/generateur';
+}
+
 export default function ConnexionForm() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('login');
@@ -34,7 +40,7 @@ export default function ConnexionForm() {
         const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
         if (signUpError) throw signUpError;
         if (data.session) {
-          router.push('/generateur');
+          router.push(nextPath());
           router.refresh();
         } else {
           setNotice('Compte créé. Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.');
@@ -43,7 +49,7 @@ export default function ConnexionForm() {
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
-        router.push('/generateur');
+        router.push(nextPath());
         router.refresh();
       }
     } catch (err) {

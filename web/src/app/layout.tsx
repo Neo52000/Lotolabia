@@ -97,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <p className="mb-1 font-semibold">Légal</p>
                   <Link href="/confidentialite" className="text-[#6B7280] hover:underline dark:text-slate-400">Confidentialité</Link>
                   <Link href="/mentions-legales" className="text-[#6B7280] hover:underline dark:text-slate-400">Mentions légales</Link>
+                  <Link href="/cgv" className="text-[#6B7280] hover:underline dark:text-slate-400">CGV</Link>
                   <Link href="/jeu-responsable" className="text-[#6B7280] hover:underline dark:text-slate-400">Jeu responsable</Link>
                   <Link href="/faq" className="text-[#6B7280] hover:underline dark:text-slate-400">FAQ</Link>
                   <Link href="/contact" className="text-[#6B7280] hover:underline dark:text-slate-400">Contact</Link>

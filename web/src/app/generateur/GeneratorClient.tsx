@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useState } from 'react';
 
 import { generateGrids, type GeneratorMethod } from '@/lib/generatorFallback';
 import { supabaseAllDraws } from '@/lib/supabasePublic';
-import { authConfigured, getAccessToken, getAuthClient } from '@/lib/authClient';
+import { getAccessToken } from '@/lib/authClient';
+import { TIER_LIMITS, canUseMethod } from '@/lib/premium';
+import { usePremiumStatus } from '@/lib/usePremiumStatus';
 import { NumberBall } from '@/components/ui';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
@@ -55,7 +58,7 @@ interface Grid {
 }
 
 export default function GeneratorClient() {
-  const [method, setMethod] = useState<GeneratorMethod>('balanced');
+  const [method, setMethod] = useState<GeneratorMethod>('random');
   const [count, setCount] = useState(1);
   const [seed, setSeed] = useState('');
   const [sumMin, setSumMin] = useState('');
@@ -64,20 +67,27 @@ export default function GeneratorClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [localFallback, setLocalFallback] = useState(false);
-  const [signedIn, setSignedIn] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lockedChoice, setLockedChoice] = useState<{ code: GeneratorMethod; label: string } | null>(null);
+  const { signedIn, tier } = usePremiumStatus();
+  const limits = TIER_LIMITS[tier];
+  const effectiveCount = Math.min(count, limits.maxGrids);
+  const countOptions = [1, 2, 3, 5, 10, 20].filter((n) => n <= limits.maxGrids);
 
-  useEffect(() => {
-    if (!authConfigured) return;
-    const supabase = getAuthClient();
-    supabase.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSignedIn(Boolean(session));
-    });
-    return () => subscription.subscription.unsubscribe();
-  }, []);
+  function chooseMethod(code: GeneratorMethod, label: string) {
+    if (canUseMethod(tier, code)) {
+      setMethod(code);
+      setLockedChoice(null);
+    } else {
+      setLockedChoice({ code, label });
+    }
+  }
 
   async function generate() {
+    if (!canUseMethod(tier, method)) {
+      setMethod('random');
+      return;
+    }
     setLoading(true);
     setError(null);
     setSaveState('idle');
@@ -90,7 +100,7 @@ export default function GeneratorClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           method,
-          count,
+          count: effectiveCount,
           ...(parsedSeed !== null ? { seed: parsedSeed } : {}),
           ...(parsedSumMin !== null ? { sum_min: parsedSumMin } : {}),
           ...(parsedSumMax !== null ? { sum_max: parsedSumMax } : {}),
@@ -108,7 +118,7 @@ export default function GeneratorClient() {
         const draws = METHODS_USING_DRAWS.has(method) ? await supabaseAllDraws() : [];
         const localGrids = generateGrids({
           method,
-          count,
+          count: effectiveCount,
           seed: parsedSeed,
           sumMin: parsedSumMin,
           sumMax: parsedSumMax,
@@ -149,32 +159,56 @@ export default function GeneratorClient() {
   return (
     <div>
       <div className="mb-9 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {METHODS.map((item) => (
-          <button
-            key={item.code}
-            type="button"
-            onClick={() => setMethod(item.code)}
-            className={`rounded-2xl border px-3 py-3.5 font-sora text-sm font-bold transition ${
-              method === item.code
-                ? 'border-gold/50 bg-gradient-to-br from-gold-light to-gold text-[#5A3F00]'
-                : 'border-night/10 bg-white text-[#495064] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+        {METHODS.map((item) => {
+          const locked = !canUseMethod(tier, item.code);
+          return (
+            <button
+              key={item.code}
+              type="button"
+              onClick={() => chooseMethod(item.code, item.label)}
+              aria-label={locked ? `${item.label} (réservé au Premium)` : item.label}
+              className={`rounded-2xl border px-3 py-3.5 font-sora text-sm font-bold transition ${
+                method === item.code
+                  ? 'border-gold/50 bg-gradient-to-br from-gold-light to-gold text-[#5A3F00]'
+                  : 'border-night/10 bg-white text-[#495064] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+              } ${locked ? 'opacity-60' : ''}`}
+            >
+              {locked && <span aria-hidden="true">🔒 </span>}
+              {item.label}
+            </button>
+          );
+        })}
       </div>
+      {lockedChoice && (
+        <p className="-mt-5 mb-8 rounded-lg bg-gold/15 p-3 text-center text-sm">
+          {canUseMethod('free', lockedChoice.code) ? (
+            <>
+              La méthode « {lockedChoice.label} » est incluse dans le compte gratuit.{' '}
+              <Link href="/connexion?next=/generateur" className="font-semibold underline">
+                Créer un compte ou se connecter
+              </Link>
+            </>
+          ) : (
+            <>
+              La méthode « {lockedChoice.label} » fait partie de l&apos;offre Premium.{' '}
+              <Link href="/premium" className="font-semibold underline">
+                Voir l&apos;offre Premium
+              </Link>
+            </>
+          )}
+        </p>
+      )}
 
       <div className="rounded-[28px] border border-gold/30 bg-white p-7 shadow-[0_20px_50px_rgba(13,27,42,0.08)] sm:p-11 dark:border-gold/20 dark:bg-slate-900">
         <div className="mb-6 flex flex-wrap items-end justify-center gap-3 text-sm">
           <label>
             <span className="mb-1 block text-xs text-[#6B7280] dark:text-slate-400">Nombre de grilles</span>
             <select
-              value={count}
+              value={effectiveCount}
               onChange={(event) => setCount(Number(event.target.value))}
               className="rounded-lg border border-night/15 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
             >
-              {[1, 2, 3, 4, 5].map((n) => (
+              {countOptions.map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
@@ -263,7 +297,7 @@ export default function GeneratorClient() {
             disabled={loading}
             className="rounded-2xl bg-gradient-to-br from-gold-light via-gold to-gold-dark px-8 py-4 font-sora text-base font-bold text-night shadow-[0_8px_30px_rgba(244,196,48,0.45)] transition hover:brightness-105 disabled:opacity-50"
           >
-            {loading ? 'Génération…' : count > 1 ? `Générer ${count} grilles` : 'Générer'}
+            {loading ? 'Génération…' : effectiveCount > 1 ? `Générer ${effectiveCount} grilles` : 'Générer'}
           </button>
           {grids.length > 0 &&
             (signedIn ? (
