@@ -57,34 +57,48 @@ Activation (quand les comptes stores existeront) :
 4. Côté Flutter : ajouter `in_app_purchase`, compiler avec
    `--dart-define=PURCHASES_ENABLED=true` (le paywall est déjà branché sur ce flag).
 
-### Web (Stripe) — implémenté, désactivé tant que les clés ne sont pas renseignées
+### Web (Stripe) — implémenté sur le site, activé dès que les clés sont renseignées
 
-- `POST /api/v1/me/premium/checkout` (authentifié) : crée une session Stripe
-  Checkout (`stripe.checkout.Session`) pour l'offre demandée — abonnement
-  (`monthly`/`yearly`) ou paiement unique (`lifetime`) — et renvoie son URL de
-  redirection. Aucun droit accordé à la création de la session.
-- `POST /api/v1/billing/stripe/webhook` (public, signature Stripe vérifiée) :
-  `checkout.session.completed` accorde le droit Premium (`platform=stripe`) ;
-  `customer.subscription.updated` met à jour le statut et la date d'expiration ;
-  `customer.subscription.deleted` révoque le droit. Un remboursement se traite
-  manuellement via `DELETE /api/v1/admin/premium/{id}`, comme pour tout achat.
-- **État actuel** : `POST /me/premium/checkout` répond `501 stripe_not_configured`
-  tant que `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` sont vides — voir
-  `backend/.env.example`.
-- **Pas encore de bouton côté site web** : le site n'a aucun compte utilisateur
-  (ni connexion, ni inscription) — seul le back-office admin est authentifié.
-  L'endpoint est prêt et testé (`backend/tests/test_billing.py`), mais un parcours
-  d'achat visible sur le site nécessite d'abord une connexion/inscription web.
+Le paiement tourne dans le **site Next.js** (route handlers exécutés en fonctions
+Netlify), sans API hébergée ; l'API Python garde son implémentation équivalente
+(`backend/app/api/v1/users.py`, `billing.py`) pour le jour où elle sera déployée.
 
-Activation (quand un compte Stripe existe) :
-1. Créer les produits et prix dans le Dashboard Stripe (mensuel, annuel, à vie).
-2. Renseigner `STRIPE_SECRET_KEY`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`,
-   `STRIPE_PRICE_LIFETIME`, `SITE_URL` dans les secrets du déploiement.
-3. Créer le endpoint webhook dans le Dashboard Stripe
-   (`https://<domaine-api>/api/v1/billing/stripe/webhook`, événements
-   `checkout.session.completed`, `customer.subscription.updated`,
-   `customer.subscription.deleted`) et renseigner `STRIPE_WEBHOOK_SECRET` avec le
-   secret de signature généré.
+- `POST /api/premium/checkout` (jeton Supabase requis) : crée une session Stripe
+  Checkout d'abonnement (`monthly` 4,99 € / `yearly` 39,96 €), liée au compte
+  (`client_reference_id`, `metadata.user_id`). Refusé sans le consentement CGV +
+  renonciation au droit de rétractation (case à cocher sur `/premium`, horodatage
+  conservé dans la session Stripe), et si le compte est déjà Premium. **Aucun droit
+  n'est accordé à la création de la session.**
+- `POST /api/stripe/webhook` (public, signature Stripe vérifiée) :
+  `checkout.session.completed` / `checkout.session.async_payment_succeeded` accordent
+  le droit (`platform=stripe`, idempotent sur `receipt_ref`) ;
+  `customer.subscription.updated` met à jour statut et échéance ;
+  `customer.subscription.deleted` révoque. Écriture via la clé service role (seule
+  autorisée par la RLS).
+- `POST /api/premium/portal` : portail client Stripe (gestion, résiliation en ligne).
+- Paliers appliqués sur le site (`web/src/lib/premium.ts`, port de `premium.py`) :
+  méthodes du générateur, nombre de grilles, itérations Monte-Carlo. Le statut est lu
+  par l'utilisateur dans `premium_entitlements` (RLS : ses lignes seulement). Les
+  calculs se faisant dans le navigateur, ce contrôle est côté client : suffisant pour
+  des données publiques, à renforcer côté serveur si l'API est déployée.
+- Pages : `/premium` (offre, achat, gestion), `/premium/succes`, `/cgv`.
+- **Mobile** : pas d'achat Stripe dans l'appli (règles Google Play pour les contenus
+  numériques) ; affichage du statut Premium et paliers mobiles à faire ensuite.
+
+Activation (mode test d'abord, puis mode réel) :
+1. Dashboard Stripe : créer le produit « LotoLab IA Premium » avec deux prix
+   récurrents (4,99 €/mois, 39,96 €/an) ; activer le portail client (Paramètres →
+   Facturation → Portail client) ; activer les e-mails de reçu et de rappel de
+   renouvellement (obligatoire pour l'offre annuelle).
+2. Créer le endpoint webhook `https://<site>/api/stripe/webhook` avec les événements
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+   `customer.subscription.updated`, `customer.subscription.deleted`.
+3. Variables d'environnement du site sur Netlify (serveur uniquement, jamais
+   `NEXT_PUBLIC_`) : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+   `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `SITE_URL`, puis redéployer.
+4. Avant le mode réel : compléter l'adresse de l'éditeur et le médiateur de la
+   consommation dans `/cgv` et `/mentions-legales`.
 
 ## Publicité mobile (AdMob)
 

@@ -1,8 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { simulateRandomPlay } from '@/lib/monteCarloFallback';
+import { TIER_LIMITS } from '@/lib/premium';
+import { usePremiumStatus } from '@/lib/usePremiumStatus';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -18,19 +21,24 @@ export default function SimulationClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localFallback, setLocalFallback] = useState(false);
+  const { tier } = usePremiumStatus();
+  const iterations = TIER_LIMITS[tier].maxIterations;
+  const label = iterations.toLocaleString('fr-FR');
 
   async function run() {
     setLoading(true);
     setError(null);
+    // Laisse le navigateur afficher l'état de chargement avant un calcul local long.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     try {
-      const response = await fetch(`${API_BASE}/api/v1/stats/monte-carlo?iterations=1000`);
+      const response = await fetch(`${API_BASE}/api/v1/stats/monte-carlo?iterations=${iterations}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error?.message ?? 'Simulation indisponible.');
       setResult(data);
       setLocalFallback(false);
     } catch {
       // API indisponible (pas encore hébergée) : simulation calculée localement.
-      setResult(simulateRandomPlay(1000));
+      setResult(simulateRandomPlay(iterations));
       setLocalFallback(true);
     } finally {
       setLoading(false);
@@ -50,8 +58,20 @@ export default function SimulationClient() {
         disabled={loading}
         className="rounded-xl bg-brand px-5 py-2.5 font-semibold text-night hover:opacity-90 disabled:opacity-50"
       >
-        {loading ? 'Simulation…' : 'Lancer 1 000 grilles aléatoires'}
+        {loading ? 'Simulation…' : `Lancer ${label} grilles aléatoires`}
       </button>
+      {tier !== 'premium' && (
+        <p className="text-xs opacity-70">
+          {tier === 'anonymous'
+            ? 'Jusqu’à 10 000 grilles avec un compte gratuit, et jusqu’à 250 000'
+            : 'Jusqu’à 250 000'}{' '}
+          grilles avec{' '}
+          <Link href="/premium" className="underline">
+            l&apos;offre Premium
+          </Link>
+          .
+        </p>
+      )}
       {error && <p className="rounded-lg bg-brand-pink/10 p-3 text-sm">{error}</p>}
       {localFallback && result && (
         <p className="rounded-lg bg-brand-yellow/15 p-3 text-xs opacity-80">

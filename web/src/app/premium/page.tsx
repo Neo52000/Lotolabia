@@ -5,8 +5,8 @@ import BillingToggle from './BillingToggle';
 export const metadata: Metadata = {
   title: 'Premium — aller plus loin dans l’analyse',
   description:
-    'Historique complet, les 6 méthodes du générateur, simulations Monte-Carlo étendues et ' +
-    'export CSV/PDF. Premium donne accès à plus de données, jamais à plus de chances de gain.',
+    'Les 6 méthodes du générateur, jusqu’à 20 grilles et des simulations Monte-Carlo étendues. ' +
+    'Premium donne accès à plus d’outils, jamais à plus de chances de gain.',
   alternates: { canonical: '/premium' },
 };
 
