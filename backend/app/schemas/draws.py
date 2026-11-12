@@ -35,12 +35,40 @@ class DrawBase(BaseModel):
         return validate_chance_number(value)
 
 
-class DrawCreate(DrawBase):
+class PrizeRank(BaseModel):
+    """Gagnants et gain unitaire (en euros) d'un rang."""
+
+    winners: int = Field(ge=0)
+    amount: float = Field(ge=0)
+
+
+class SecondDraw(BaseModel):
+    """Second tirage du Loto : 5 numéros, promotion éventuelle, rangs 1 à 4."""
+
+    numbers: list[int] = Field(min_length=5, max_length=5)
+    promotion: int | None = None
+    prizes: dict[str, PrizeRank] = Field(default_factory=dict)
+
+    @field_validator("numbers")
+    @classmethod
+    def _numbers(cls, values: list[int]) -> list[int]:
+        return validate_main_numbers(values)
+
+
+class DrawDetails(BaseModel):
+    """Détails optionnels issus des fichiers officiels (absents des imports manuels)."""
+
+    jackpot_euros: int | None = Field(default=None, ge=0)
+    prizes: dict[str, PrizeRank] | None = None
+    second_draw: SecondDraw | None = None
+
+
+class DrawCreate(DrawBase, DrawDetails):
     source: str = "manual"
     source_url: str | None = None
 
 
-class Draw(DrawBase):
+class Draw(DrawBase, DrawDetails):
     id: int
     draw_type: str = "loto"
     source: str = "manual"

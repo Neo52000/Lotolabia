@@ -5,6 +5,9 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/) ; versionn
 ## [Non publié]
 
 ### Ajouté
+- **Collecteur : gains par rang et second tirage** (`backend/app/collector/parser.py`,
+  migration `0006`) : gagnants et gain des rangs 1 à 9, cagnotte du rang 1, second
+  tirage (numéros, promotion, rangs 1 à 4) ; complétion des tirages existants sans gains.
 - **Refonte visuelle « Jackpot »** (`web/`) : nouvelle direction visuelle du site
   public à partir du handoff de design fourni (dorures, néons, boules de loto
   animées, polices Sora/Inter) — en-tête et pied de page communs, page

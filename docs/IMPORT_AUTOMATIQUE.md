@@ -123,6 +123,15 @@ date,n1,n2,n3,n4,n5,chance
 ou le format historique officiel (`;`, colonnes `date_de_tirage;boule_1..boule_5;numero_chance`,
 dates `JJ/MM/AAAA`), directement ou dans un ZIP.
 
+### Gains par rang et second tirage (format historique uniquement)
+
+Le collecteur lit aussi, quand les colonnes existent : gagnants et gain des rangs 1 à 9
+(`prizes`), cagnotte du rang 1 (`jackpot_euros`) et second tirage — numéros, promotion,
+rangs 1 à 4 (`second_draw`). Une cellule illisible n'invalide jamais le tirage : le détail
+concerné est omis et un avertissement est écrit dans `sync_logs`.
+Les tirages déjà en base sans gains sont complétés au prochain import (`prizes IS NULL`
+uniquement, aucun écrasement). **Appliquer la migration `0006` avant de déployer.**
+
 ## Tests
 
 `backend/tests/test_parser.py` (formats, ZIP, changement de format, lignes invalides,

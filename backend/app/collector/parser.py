@@ -7,6 +7,11 @@ Formats supportés :
     format d'import manuel documenté ;
   * archives ZIP contenant l'un des CSV ci-dessus.
 
+Détails optionnels (CSV « historique » uniquement) : gagnants et gain par rang
+(1 à 9), cagnotte du rang 1, second tirage (numéros, promotion, rangs 1 à 4).
+Une cellule de détail illisible n'invalide jamais le tirage : le détail
+concerné est omis et la ligne est comptée dans `details_incomplete`.
+
 Le parseur détecte automatiquement le séparateur et le mappage de colonnes.
 Si aucun mappage connu ne correspond, une `FormatChangeError` est levée :
 le job d'import échoue explicitement et l'administrateur est alerté (le
@@ -38,6 +43,9 @@ COLUMN_MAPPINGS: list[dict[str, list[str]]] = [
 
 DATE_FORMATS = ("%Y-%m-%d", "%d/%m/%Y", "%d/%m/%y", "%Y%m%d")
 
+MAIN_PRIZE_RANKS = range(1, 10)
+SECOND_DRAW_PRIZE_RANKS = range(1, 5)
+
 
 class ParserError(Exception):
     """Erreur de parsing bloquante (fichier illisible)."""
@@ -52,6 +60,11 @@ class ParsedRow:
     draw_date: date
     numbers: list[int]
     chance: int
+    jackpot_euros: int | None = None
+    # {"1": {"winners": 0, "amount": 15000000.0}, ...}
+    prizes: dict[str, dict] | None = None
+    # {"numbers": [...], "promotion": int | None, "prizes": {"1": {...}, ..., "4": {...}}}
+    second_draw: dict | None = None
 
 
 @dataclass
@@ -66,6 +79,7 @@ class ParseResult:
     rejected: list[RejectedRow] = field(default_factory=list)
     mapping_used: int = -1
     delimiter: str = ";"
+    details_incomplete: int = 0
 
 
 def _maybe_unzip(content: bytes) -> bytes:
@@ -105,6 +119,64 @@ def _parse_date(value: str) -> date:
     raise ValueError(f"Date illisible : {cleaned!r}")
 
 
+def _to_float(value: str) -> float | None:
+    """Nombre au format FDJ (« 15000000,00 », « 110269,4 », « 7 453 »)."""
+    cleaned = value.replace("\u00a0", "").replace(" ", "").replace(",", ".")
+    if not cleaned:
+        return None
+    try:
+        number = float(cleaned)
+    except ValueError:
+        return None
+    return number if number == number and number >= 0 else None  # exclut NaN et négatifs
+
+
+def _to_count(value: str) -> int | None:
+    number = _to_float(value)
+    return int(number) if number is not None and number == int(number) else None
+
+
+def _parse_prizes(get_opt, ranks, winners_col: str, amount_col: str) -> tuple[dict, bool]:
+    """Retourne (gains par rang, incomplet). Un rang absent des colonnes est ignoré."""
+    prizes: dict[str, dict] = {}
+    incomplete = False
+    for rank in ranks:
+        winners_raw = get_opt(winners_col.format(rank=rank))
+        amount_raw = get_opt(amount_col.format(rank=rank))
+        if winners_raw is None and amount_raw is None:
+            continue  # colonnes absentes du fichier
+        winners = _to_count(winners_raw or "")
+        amount = _to_float(amount_raw or "")
+        if winners is None or amount is None:
+            incomplete = True
+            continue
+        prizes[str(rank)] = {"winners": winners, "amount": amount}
+    return prizes, incomplete
+
+
+def _parse_second_draw(get_opt) -> tuple[dict | None, bool]:
+    raw_numbers = [get_opt(f"boule_{i}_second_tirage") for i in range(1, 6)]
+    if all(not (value or "").strip() for value in raw_numbers):
+        return None, False  # pas de second tirage dans ce fichier / pour ce tirage
+    try:
+        numbers = sorted(int(value or "") for value in raw_numbers)
+    except ValueError:
+        return None, True
+    if len(set(numbers)) != 5 or any(n < 1 or n > 49 for n in numbers):
+        return None, True
+    prizes, incomplete = _parse_prizes(
+        get_opt,
+        SECOND_DRAW_PRIZE_RANKS,
+        "nombre_de_gagnant_au_rang_{rank}_second_tirage",
+        "rapport_du_rang{rank}_second_tirage",
+    )
+    promotion_raw = get_opt("promotion_second_tirage") or ""
+    promotion = _to_count(promotion_raw)
+    if promotion_raw.strip() and promotion is None:
+        incomplete = True
+    return {"numbers": numbers, "promotion": promotion, "prizes": prizes}, incomplete
+
+
 def parse_results_file(content: bytes) -> ParseResult:
     payload = _maybe_unzip(content)
     try:
@@ -131,6 +203,16 @@ def parse_results_file(content: bytes) -> ParseResult:
     def get(row: dict, key: str) -> str:
         return (row.get(normalized_names[key]) or "").strip()
 
+    def optional_getter(row: dict):
+        """Accès à une colonne optionnelle ; None si la colonne n'existe pas."""
+
+        def get_opt(key: str) -> str | None:
+            if key not in normalized_names:
+                return None
+            return (row.get(normalized_names[key]) or "").strip()
+
+        return get_opt
+
     result = ParseResult(mapping_used=mapping_index, delimiter=delimiter)
     for row in reader:
         raw = {k: v for k, v in row.items() if k}
@@ -146,7 +228,25 @@ def parse_results_file(content: bytes) -> ParseResult:
         if problems:
             result.rejected.append(RejectedRow(raw=raw, reason="; ".join(problems)))
             continue
-        result.rows.append(ParsedRow(draw_date=draw_date, numbers=sorted(numbers), chance=chance))
+
+        get_opt = optional_getter(row)
+        prizes, prizes_incomplete = _parse_prizes(
+            get_opt, MAIN_PRIZE_RANKS, "nombre_de_gagnant_au_rang{rank}", "rapport_du_rang{rank}"
+        )
+        second_draw, second_incomplete = _parse_second_draw(get_opt)
+        if prizes_incomplete or second_incomplete:
+            result.details_incomplete += 1
+        jackpot = prizes.get("1", {}).get("amount")
+        result.rows.append(
+            ParsedRow(
+                draw_date=draw_date,
+                numbers=sorted(numbers),
+                chance=chance,
+                jackpot_euros=int(round(jackpot)) if jackpot is not None else None,
+                prizes=prizes or None,
+                second_draw=second_draw,
+            )
+        )
     return result
 
 

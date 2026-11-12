@@ -14,6 +14,15 @@ from ..core.errors import ConflictError, NotFoundError, UpstreamError
 from ..schemas.draws import Draw, DrawCreate
 
 
+def _details_payload(item: DrawCreate) -> dict:
+    """Colonnes de détail (migration 0006), toujours présentes pour un INSERT homogène."""
+    return {
+        "jackpot_euros": item.jackpot_euros,
+        "prizes": {k: v.model_dump() for k, v in item.prizes.items()} if item.prizes else None,
+        "second_draw": item.second_draw.model_dump() if item.second_draw else None,
+    }
+
+
 class SupabaseRepository:
     def __init__(self, supabase_url: str, service_role_key: str, timeout: float = 15.0) -> None:
         self._rest = f"{supabase_url.rstrip('/')}/rest/v1"
@@ -78,6 +87,9 @@ class SupabaseRepository:
             source=row.get("source", "manual"),
             source_url=row.get("source_url"),
             retrieved_at=row.get("retrieved_at"),
+            jackpot_euros=row.get("jackpot_euros"),
+            prizes=row.get("prizes"),
+            second_draw=row.get("second_draw"),
         )
 
     # ----------------------------------------------------------------- tirages
@@ -144,6 +156,7 @@ class SupabaseRepository:
                 "source": item.source,
                 "source_url": item.source_url,
                 "retrieved_at": datetime.now(UTC).isoformat(),
+                **_details_payload(item),
             }
             for item in draws
         ]
@@ -159,6 +172,49 @@ class SupabaseRepository:
         )
         inserted = len(response.json())
         return inserted, len(draws) - inserted
+
+    async def backfill_draw_details(self, draws: list[DrawCreate]) -> int:
+        """Complète les tirages existants sans gains (prizes IS NULL), sans rien écraser."""
+        candidates = {
+            item.draw_date: item
+            for item in draws
+            if item.prizes is not None or item.second_draw is not None
+        }
+        if not candidates:
+            return 0
+        missing: set[date] = set()
+        offset = 0
+        chunk = 1000
+        while True:
+            batch = await self._select(
+                "draws",
+                {
+                    "select": "draw_date",
+                    "prizes": "is.null",
+                    "order": "draw_date.asc",
+                    "offset": offset,
+                    "limit": chunk,
+                },
+            )
+            missing.update(date.fromisoformat(row["draw_date"]) for row in batch)
+            if len(batch) < chunk:
+                break
+            offset += chunk
+        updated = 0
+        for draw_date in sorted(missing & candidates.keys()):
+            response = await self._request(
+                "PATCH",
+                "draws",
+                params={
+                    "draw_date": f"eq.{draw_date.isoformat()}",
+                    "draw_type": "eq.loto",
+                    "prizes": "is.null",  # garde-fou : jamais d'écrasement
+                },
+                json_body=_details_payload(candidates[draw_date]),
+                headers={"Prefer": "return=representation"},
+            )
+            updated += len(response.json())
+        return updated
 
     async def update_draw(self, draw_id: int, data: dict) -> Draw:
         if "draw_date" in data and isinstance(data["draw_date"], date):
