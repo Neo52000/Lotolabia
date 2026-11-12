@@ -36,6 +36,9 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
+          # Version figée : « stable » flottant a cassé `flutter analyze` (dépréciation de
+          # material.dart en 3.50). Dernière version vérifiée verte : 3.47.7 (37 tests).
+          flutter-version: '3.47.7'
           channel: stable
           cache: true
       - run: flutter pub get
@@ -85,6 +88,9 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
+          # Version figée : « stable » flottant a cassé `flutter analyze` (dépréciation de
+          # material.dart en 3.50). Dernière version vérifiée verte : 3.47.7 (37 tests).
+          flutter-version: '3.47.7'
           channel: stable
           cache: true
       - run: flutter pub get

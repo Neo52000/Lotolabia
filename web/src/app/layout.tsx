@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Sora } from 'next/font/google';
+import localFont from 'next/font/local';
 import Link from 'next/link';
 
 import { INDEPENDENCE, SITE_URL } from '@/lib/api';
@@ -8,8 +8,24 @@ import MobileNav from '@/components/MobileNav';
 
 import './globals.css';
 
-const sora = Sora({ subsets: ['latin'], weight: ['400', '600', '700', '800'], variable: '--font-sora' });
-const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-inter' });
+// Polices auto-hébergées (paquets @fontsource-variable, verrouillés par package-lock.json) :
+// le build ne dépend plus de Google Fonts — plus d'échec aléatoire en CI, et aucune
+// requête vers Google côté visiteur (RGPD). Sous-ensemble « latin » : couvre le français
+// (accents, œ, « », —, ’, €).
+const sora = localFont({
+  src: '../../node_modules/@fontsource-variable/sora/files/sora-latin-wght-normal.woff2',
+  weight: '100 800',
+  style: 'normal',
+  display: 'swap',
+  variable: '--font-sora',
+});
+const inter = localFont({
+  src: '../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
+  weight: '100 900',
+  style: 'normal',
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
