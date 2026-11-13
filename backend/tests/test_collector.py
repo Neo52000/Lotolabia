@@ -199,3 +199,35 @@ def test_supabase_backfill_only_patches_rows_without_prizes():
     assert len(patches) == 1
     assert patches[0].url.params["draw_date"] == "eq.2026-11-11"
     assert patches[0].url.params["prizes"] == "is.null"  # garde-fou anti-écrasement
+
+
+def test_postgrest_error_reason_is_logged_but_not_exposed(caplog):
+    from datetime import date
+
+    from app.core.errors import UpstreamError
+    from app.db.supabase_repo import SupabaseRepository
+    from app.schemas.draws import DrawCreate
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            400,
+            json={
+                "code": "PGRST204",
+                "message": "Could not find the 'prizes' column of 'draws' in the schema cache",
+                "details": "Failing row contains (2026-11-11, {4,5,14,17,29}, 8)",
+            },
+        )
+
+    repo = SupabaseRepository("https://x.supabase.co", "secret-key")
+    repo._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    draw = DrawCreate(draw_date=date(2026, 11, 11), numbers=[4, 5, 14, 17, 29], chance=8)
+
+    with caplog.at_level("WARNING", logger="app.db.supabase_repo"):
+        with pytest.raises(UpstreamError) as excinfo:
+            run(repo.insert_draws([draw]))
+
+    assert str(excinfo.value) == "Erreur base de données (HTTP 400)."  # message client inchangé
+    logged = caplog.text
+    assert "PGRST204" in logged and "'prizes' column" in logged and "HTTP 400" in logged
+    assert "Failing row" not in logged  # `details` jamais journalisé
+    assert "secret-key" not in logged
