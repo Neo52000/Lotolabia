@@ -5,6 +5,7 @@ Toutes les valeurs passent par des paramètres de requête PostgREST : aucune
 concaténation SQL, pas d'injection possible.
 """
 
+import logging
 from datetime import UTC, date, datetime
 from typing import Any
 
@@ -12,6 +13,34 @@ import httpx
 
 from ..core.errors import ConflictError, NotFoundError, UpstreamError
 from ..schemas.draws import Draw, DrawCreate
+
+logger = logging.getLogger(__name__)
+
+
+def _log_postgrest_error(method: str, table: str, response: httpx.Response) -> None:
+    """Journalise la raison du refus PostgREST (code + message) pour le diagnostic.
+
+    Sans cela, un « HTTP 400 » est inexploitable (colonne manquante, contrainte, cache de
+    schéma périmé...). Seuls `code` et `message` sont journalisés : jamais `details` (peut
+    citer les valeurs de la ligne), ni la requête, ni les en-têtes. Le message renvoyé aux
+    clients de l'API reste générique.
+    """
+    code = message = None
+    try:
+        body = response.json()
+        if isinstance(body, dict):
+            code = body.get("code")
+            message = body.get("message")
+    except ValueError:
+        pass
+    logger.warning(
+        "PostgREST %s %s -> HTTP %s code=%s message=%s",
+        method,
+        table,
+        response.status_code,
+        str(code)[:40] if code else "-",
+        str(message)[:300] if message else "-",
+    )
 
 
 def _details_payload(item: DrawCreate) -> dict:
@@ -59,6 +88,7 @@ class SupabaseRepository:
         if response.status_code == 409:
             raise ConflictError("Conflit avec une ressource existante.")
         if response.status_code >= 400:
+            _log_postgrest_error(method, table, response)
             raise UpstreamError(f"Erreur base de données (HTTP {response.status_code}).")
         return response
 
