@@ -231,3 +231,122 @@ def test_postgrest_error_reason_is_logged_but_not_exposed(caplog):
     assert "PGRST204" in logged and "'prizes' column" in logged and "HTTP 400" in logged
     assert "Failing row" not in logged  # `details` jamais journalisé
     assert "secret-key" not in logged
+
+
+# --- Repli quand la migration 0006 n'est pas appliquée -----------------------
+
+
+def _fallback_repo(handler):
+    from app.db.supabase_repo import SupabaseRepository
+
+    repo = SupabaseRepository("https://x.supabase.co", "k")
+    repo._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    return repo
+
+
+def _detailed_draw(day: int):
+    from datetime import date
+
+    from app.schemas.draws import DrawCreate
+
+    return DrawCreate(
+        draw_date=date(2026, 11, day),
+        numbers=[4, 5, 14, 17, 29],
+        chance=8,
+        jackpot_euros=15_000_000,
+        prizes={"1": {"winners": 0, "amount": 15_000_000.0}},
+        second_draw={"numbers": [18, 30, 34, 35, 44], "promotion": None, "prizes": {}},
+    )
+
+
+def test_insert_falls_back_without_prize_columns_and_warns(caplog):
+    import json
+
+    bodies: list[list[dict]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        rows = json.loads(request.content)
+        bodies.append(rows)
+        if "prizes" in rows[0]:  # base sans migration 0006
+            return httpx.Response(
+                400,
+                json={
+                    "code": "PGRST204",
+                    "message": "Could not find the 'prizes' column of 'draws' in the schema cache",
+                },
+            )
+        return httpx.Response(201, json=[{"id": i} for i, _ in enumerate(rows, 1)])
+
+    repo = _fallback_repo(handler)
+    with caplog.at_level("WARNING", logger="app.db.supabase_repo"):
+        inserted, skipped = run(repo.insert_draws([_detailed_draw(9), _detailed_draw(11)]))
+
+    assert (inserted, skipped) == (2, 0)
+    assert len(bodies) == 2  # un essai refusé, puis le réessai sans les colonnes de gains
+    retry = bodies[1][0]
+    assert "prizes" not in retry and "second_draw" not in retry
+    assert retry["jackpot_euros"] == 15_000_000  # colonne ancienne : toujours envoyée
+    assert retry["numbers"] == [4, 5, 14, 17, 29] and retry["chance"] == 8
+    assert repo.details_supported is False
+    assert "migration 0006 non appliquée" in caplog.text
+
+
+def test_after_fallback_next_insert_skips_the_failing_attempt():
+    import json
+
+    calls: list[bool] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        rows = json.loads(request.content)
+        calls.append("prizes" in rows[0])
+        if "prizes" in rows[0]:
+            return httpx.Response(
+                400,
+                json={"code": "PGRST204", "message": "Could not find the 'prizes' column"},
+            )
+        return httpx.Response(201, json=[{"id": 1}])
+
+    repo = _fallback_repo(handler)
+    run(repo.insert_draws([_detailed_draw(9)]))
+    run(repo.insert_draws([_detailed_draw(11)]))
+    assert calls == [True, False, False]  # 2e insertion : directement sans les colonnes
+
+
+def test_backfill_is_skipped_when_columns_are_missing():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "GET"  # jamais de PATCH
+        return httpx.Response(
+            400, json={"code": "42703", "message": "column draws.prizes does not exist"}
+        )
+
+    repo = _fallback_repo(handler)
+    assert run(repo.backfill_draw_details([_detailed_draw(9)])) == 0
+    assert repo.details_supported is False
+
+
+def test_unrelated_missing_column_is_not_swallowed():
+    from app.core.errors import UpstreamError
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            400, json={"code": "PGRST204", "message": "Could not find the 'chance' column"}
+        )
+
+    repo = _fallback_repo(handler)
+    with pytest.raises(UpstreamError):
+        run(repo.insert_draws([_detailed_draw(9)]))
+    assert repo.details_supported is True
+
+
+def test_service_logs_warning_when_details_unsupported(service):
+    collector, repo = service
+    repo.details_supported = False  # simule le dépôt Supabase en mode repli
+
+    async def scenario():
+        await collector.import_manual_file(_full_csv().encode(), "full.csv")
+        logs = await repo.list_sync_logs()
+        assert any(
+            entry["level"] == "warning" and "migration 0006" in entry["message"] for entry in logs
+        )
+
+    run(scenario())

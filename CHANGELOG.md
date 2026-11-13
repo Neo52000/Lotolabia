@@ -5,6 +5,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/) ; versionn
 ## [Non publié]
 
 ### Ajouté
+- **Collecteur : repli si la migration `0006` manque** : l'insertion est réessayée sans les
+  colonnes de gains (numéros importés, avertissement journalisé) au lieu d'échouer.
 - **Collecteur : gains par rang et second tirage** (`backend/app/collector/parser.py`,
   migration `0006`) : gagnants et gain des rangs 1 à 9, cagnotte du rang 1, second
   tirage (numéros, promotion, rangs 1 à 4) ; complétion des tirages existants sans gains.
