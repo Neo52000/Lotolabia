@@ -6,6 +6,7 @@ concaténation SQL, pas d'injection possible.
 """
 
 import logging
+import re
 from datetime import UTC, date, datetime
 from typing import Any
 
@@ -16,6 +17,29 @@ from ..schemas.draws import Draw, DrawCreate
 
 logger = logging.getLogger(__name__)
 
+# Colonnes ajoutées par la migration 0006. Leur absence ne doit pas bloquer l'import des
+# numéros : on réessaie sans elles (jackpot_euros existe depuis 0001, il reste envoyé).
+NEW_DETAIL_COLUMNS = ("prizes", "second_draw")
+_MISSING_COLUMN_CODES = {"PGRST204", "42703"}  # colonne inconnue (cache de schéma / SQL)
+_DETAIL_COLUMN_RE = re.compile(r"\b(" + "|".join(NEW_DETAIL_COLUMNS) + r")\b")
+
+
+class MissingDetailColumnError(UpstreamError):
+    """La base ne connaît pas les colonnes de gains (migration 0006 non appliquée).
+
+    Sous-classe d'UpstreamError : le message client reste générique et inchangé.
+    """
+
+
+def _postgrest_error_info(response: httpx.Response) -> tuple[str | None, str | None]:
+    try:
+        body = response.json()
+    except ValueError:
+        return None, None
+    if not isinstance(body, dict):
+        return None, None
+    return body.get("code"), body.get("message")
+
 
 def _log_postgrest_error(method: str, table: str, response: httpx.Response) -> None:
     """Journalise la raison du refus PostgREST (code + message) pour le diagnostic.
@@ -25,14 +49,7 @@ def _log_postgrest_error(method: str, table: str, response: httpx.Response) -> N
     citer les valeurs de la ligne), ni la requête, ni les en-têtes. Le message renvoyé aux
     clients de l'API reste générique.
     """
-    code = message = None
-    try:
-        body = response.json()
-        if isinstance(body, dict):
-            code = body.get("code")
-            message = body.get("message")
-    except ValueError:
-        pass
+    code, message = _postgrest_error_info(response)
     logger.warning(
         "PostgREST %s %s -> HTTP %s code=%s message=%s",
         method,
@@ -52,8 +69,13 @@ def _details_payload(item: DrawCreate) -> dict:
     }
 
 
+def _without_new_columns(payload: list[dict]) -> list[dict]:
+    return [{k: v for k, v in row.items() if k not in NEW_DETAIL_COLUMNS} for row in payload]
+
+
 class SupabaseRepository:
     def __init__(self, supabase_url: str, service_role_key: str, timeout: float = 15.0) -> None:
+        self._details_supported = True
         self._rest = f"{supabase_url.rstrip('/')}/rest/v1"
         self._auth_admin = f"{supabase_url.rstrip('/')}/auth/v1/admin"
         self._client = httpx.AsyncClient(
@@ -66,6 +88,20 @@ class SupabaseRepository:
 
     async def aclose(self) -> None:
         await self._client.aclose()
+
+    @property
+    def details_supported(self) -> bool:
+        """Faux dès qu'on a constaté l'absence des colonnes de gains (migration 0006)."""
+        return self._details_supported
+
+    def _mark_details_unsupported(self) -> None:
+        if self._details_supported:
+            self._details_supported = False
+            logger.warning(
+                "Colonnes %s absentes de la base : migration 0006 non appliquée sur ce projet. "
+                "Les tirages sont importés SANS gains ni second tirage.",
+                ", ".join(NEW_DETAIL_COLUMNS),
+            )
 
     # ------------------------------------------------------------------ utils
     async def _request(
@@ -89,7 +125,11 @@ class SupabaseRepository:
             raise ConflictError("Conflit avec une ressource existante.")
         if response.status_code >= 400:
             _log_postgrest_error(method, table, response)
-            raise UpstreamError(f"Erreur base de données (HTTP {response.status_code}).")
+            code, message = _postgrest_error_info(response)
+            error_text = f"Erreur base de données (HTTP {response.status_code})."
+            if code in _MISSING_COLUMN_CODES and _DETAIL_COLUMN_RE.search(str(message or "")):
+                raise MissingDetailColumnError(error_text)
+            raise UpstreamError(error_text)
         return response
 
     async def _select(self, table: str, params: dict) -> list[dict]:
@@ -190,8 +230,20 @@ class SupabaseRepository:
             }
             for item in draws
         ]
+        if not self._details_supported:
+            payload = _without_new_columns(payload)
+        try:
+            response = await self._post_draws(payload)
+        except MissingDetailColumnError:
+            # Refus avant toute écriture (colonne inconnue) : le réessai sans elles est sûr.
+            self._mark_details_unsupported()
+            response = await self._post_draws(_without_new_columns(payload))
+        inserted = len(response.json())
+        return inserted, len(draws) - inserted
+
+    async def _post_draws(self, payload: list[dict]) -> httpx.Response:
         # ignore-duplicates : les doublons (même date) sont silencieusement ignorés
-        response = await self._request(
+        return await self._request(
             "POST",
             "draws",
             json_body=payload,
@@ -200,8 +252,6 @@ class SupabaseRepository:
             },
             params={"on_conflict": "draw_date,draw_type"},
         )
-        inserted = len(response.json())
-        return inserted, len(draws) - inserted
 
     async def backfill_draw_details(self, draws: list[DrawCreate]) -> int:
         """Complète les tirages existants sans gains (prizes IS NULL), sans rien écraser."""
@@ -210,22 +260,26 @@ class SupabaseRepository:
             for item in draws
             if item.prizes is not None or item.second_draw is not None
         }
-        if not candidates:
+        if not candidates or not self._details_supported:
             return 0
         missing: set[date] = set()
         offset = 0
         chunk = 1000
         while True:
-            batch = await self._select(
-                "draws",
-                {
-                    "select": "draw_date",
-                    "prizes": "is.null",
-                    "order": "draw_date.asc",
-                    "offset": offset,
-                    "limit": chunk,
-                },
-            )
+            try:
+                batch = await self._select(
+                    "draws",
+                    {
+                        "select": "draw_date",
+                        "prizes": "is.null",
+                        "order": "draw_date.asc",
+                        "offset": offset,
+                        "limit": chunk,
+                    },
+                )
+            except MissingDetailColumnError:
+                self._mark_details_unsupported()
+                return 0
             missing.update(date.fromisoformat(row["draw_date"]) for row in batch)
             if len(batch) < chunk:
                 break

@@ -169,6 +169,14 @@ class CollectorService:
                 "details_incomplete": parsed.details_incomplete,
             },
         )
+        if not getattr(self._repo, "details_supported", True):
+            await self._repo.add_sync_log(
+                job_id,
+                "warning",
+                "Colonnes de gains absentes de la base (migration 0006 non appliquée sur ce "
+                "projet) : tirages importés SANS gains ni second tirage. Appliquez la "
+                "migration puis relancez la synchronisation pour les compléter.",
+            )
         if parsed.details_incomplete:
             await self._repo.add_sync_log(
                 job_id,

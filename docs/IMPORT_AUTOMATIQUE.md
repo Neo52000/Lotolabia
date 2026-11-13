@@ -130,7 +130,14 @@ Le collecteur lit aussi, quand les colonnes existent : gagnants et gain des rang
 rangs 1 à 4 (`second_draw`). Une cellule illisible n'invalide jamais le tirage : le détail
 concerné est omis et un avertissement est écrit dans `sync_logs`.
 Les tirages déjà en base sans gains sont complétés au prochain import (`prizes IS NULL`
-uniquement, aucun écrasement). **Appliquer la migration `0006` avant de déployer.**
+uniquement, aucun écrasement). **Appliquer la migration `0006` sur le projet Supabase
+du secret `SUPABASE_URL`.**
+
+Si la migration manque (erreur PostgREST `PGRST204` / `42703` sur `prizes` ou `second_draw`),
+le collecteur ne bloque pas : il réessaie l'insertion sans ces deux colonnes, importe donc les
+numéros de chaque tirage, et écrit un avertissement (journal du workflow et `sync_logs`).
+Après avoir appliqué la migration, relancer `collector-sync` complète les gains des tirages
+déjà importés. Toute autre erreur de base reste bloquante.
 
 ## Tests
 
