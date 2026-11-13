@@ -22,7 +22,7 @@ import httpx
 from ..core.config import Settings
 from ..db.repository import Repository
 from ..schemas.draws import DrawCreate
-from .parser import FormatChangeError, ParserError, parse_results_file
+from .parser import FormatChangeError, ParsedRow, ParserError, parse_results_file
 
 logger = logging.getLogger(__name__)
 
@@ -141,17 +141,10 @@ class CollectorService:
             await self._repo.add_quarantine(job_id, rejected.raw, rejected.reason)
             quarantined += 1
 
-        draws = [
-            DrawCreate(
-                draw_date=row.draw_date,
-                numbers=row.numbers,
-                chance=row.chance,
-                source=source,
-                source_url=source_url,
-            )
-            for row in parsed.rows
-        ]
+        draws = [_to_draw_create(row, source, source_url) for row in parsed.rows]
         inserted, skipped = await self._repo.insert_draws(draws)
+        # Tirages déjà en base sans gains (importés avant l'extension du parseur).
+        details_backfilled = await self._repo.backfill_draw_details(draws) if skipped else 0
 
         status = "success" if quarantined == 0 else "partial"
         await self._repo.update_import_job(
@@ -172,8 +165,17 @@ class CollectorService:
                 "skipped_duplicates": skipped,
                 "quarantined": quarantined,
                 "mapping": parsed.mapping_used,
+                "details_backfilled": details_backfilled,
+                "details_incomplete": parsed.details_incomplete,
             },
         )
+        if parsed.details_incomplete:
+            await self._repo.add_sync_log(
+                job_id,
+                "warning",
+                f"{parsed.details_incomplete} tirage(s) avec gains ou second tirage illisibles "
+                "(détails omis, tirages importés).",
+            )
         logger.info(
             "Import %s : %d insérés, %d doublons ignorés, %d en quarantaine",
             job_id,
@@ -187,6 +189,7 @@ class CollectorService:
             "imported": inserted,
             "skipped": skipped,
             "quarantined": quarantined,
+            "details_backfilled": details_backfilled,
         }
 
     async def approve_quarantined(self, item_id: int, reviewer_id: str) -> dict:
@@ -205,17 +208,23 @@ class CollectorService:
             raise AppError("still_invalid", f"Validation impossible : {reason}")
         row = parsed.rows[0]
         inserted, skipped = await self._repo.insert_draws(
-            [
-                DrawCreate(
-                    draw_date=row.draw_date,
-                    numbers=row.numbers,
-                    chance=row.chance,
-                    source="quarantine_approved",
-                )
-            ]
+            [_to_draw_create(row, "quarantine_approved", None)]
         )
         await self._repo.review_quarantine(item_id, "approved", reviewer_id)
         return {"inserted": inserted, "skipped": skipped}
+
+
+def _to_draw_create(row: ParsedRow, source: str, source_url: str | None) -> DrawCreate:
+    return DrawCreate(
+        draw_date=row.draw_date,
+        numbers=row.numbers,
+        chance=row.chance,
+        source=source,
+        source_url=source_url,
+        jackpot_euros=row.jackpot_euros,
+        prizes=row.prizes,
+        second_draw=row.second_draw,
+    )
 
 
 def _raw_to_csv(raw: dict) -> str:

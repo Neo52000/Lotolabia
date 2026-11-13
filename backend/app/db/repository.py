@@ -30,6 +30,7 @@ class Repository(Protocol):
     async def get_draw(self, draw_id: int) -> Draw | None: ...
     async def latest_draw(self) -> Draw | None: ...
     async def insert_draws(self, draws: list[DrawCreate]) -> tuple[int, int]: ...
+    async def backfill_draw_details(self, draws: list[DrawCreate]) -> int: ...
     async def update_draw(self, draw_id: int, data: dict) -> Draw: ...
     async def delete_draw(self, draw_id: int) -> None: ...
 
@@ -159,10 +160,31 @@ class MemoryRepository:
                 source=item.source,
                 source_url=item.source_url,
                 retrieved_at=datetime.now(UTC),
+                jackpot_euros=item.jackpot_euros,
+                prizes=item.prizes,
+                second_draw=item.second_draw,
             )
             existing_dates.add(item.draw_date)
             inserted += 1
         return inserted, skipped
+
+    async def backfill_draw_details(self, draws: list[DrawCreate]) -> int:
+        """Complète les tirages existants dont les gains sont absents (jamais d'écrasement)."""
+        updated = 0
+        for item in draws:
+            if item.prizes is None and item.second_draw is None:
+                continue
+            for draw_id, current in list(self._draws.items()):
+                if current.draw_date == item.draw_date and current.prizes is None:
+                    self._draws[draw_id] = current.model_copy(
+                        update={
+                            "jackpot_euros": item.jackpot_euros,
+                            "prizes": item.prizes,
+                            "second_draw": item.second_draw,
+                        }
+                    )
+                    updated += 1
+        return updated
 
     async def update_draw(self, draw_id: int, data: dict) -> Draw:
         current = self._draws.get(draw_id)

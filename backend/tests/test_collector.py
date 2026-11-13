@@ -122,3 +122,80 @@ def test_quarantine_approval_flow(service):
         assert (await repo.get_quarantine(item["id"]))["status"] == "approved"
 
     run(scenario())
+
+
+def _full_csv() -> str:
+    from tests.test_parser import FDJ_FULL_HEADER, FDJ_FULL_ROW
+
+    return FDJ_FULL_HEADER + FDJ_FULL_ROW
+
+
+def test_import_stores_prizes_and_second_draw(service):
+    collector, repo = service
+
+    async def scenario():
+        result = await collector.import_manual_file(_full_csv().encode(), "full.csv")
+        assert result["imported"] == 1 and result["details_backfilled"] == 0
+        draw = (await repo.all_draws())[0]
+        assert draw.jackpot_euros == 15_000_000
+        assert draw.prizes["3"].winners == 72
+        assert draw.second_draw.numbers == [18, 30, 34, 35, 44]
+        assert draw.second_draw.prizes["4"].amount == 3.0
+
+    run(scenario())
+
+
+def test_reimport_backfills_missing_prizes_without_overwriting(service):
+    collector, repo = service
+
+    async def scenario():
+        # 1) tirage importé « à l'ancienne » (sans gains)
+        await collector.import_manual_file(
+            b"date,n1,n2,n3,n4,n5,chance\n2026-11-11,5,14,17,29,4,8\n", "old.csv"
+        )
+        assert (await repo.all_draws())[0].prizes is None
+        # 2) ré-import du fichier complet : doublon ignoré mais gains complétés
+        result = await collector.import_manual_file(_full_csv().encode(), "full.csv")
+        assert result["imported"] == 0 and result["skipped"] == 1
+        assert result["details_backfilled"] == 1
+        draw = (await repo.all_draws())[0]
+        assert draw.prizes["1"].amount == 15_000_000.0
+        # 3) un nouveau ré-import ne réécrit rien
+        again = await collector.import_manual_file(_full_csv().encode(), "full.csv")
+        assert again["details_backfilled"] == 0
+
+    run(scenario())
+
+
+def test_supabase_backfill_only_patches_rows_without_prizes():
+    from datetime import date
+
+    from app.db.supabase_repo import SupabaseRepository
+    from app.schemas.draws import DrawCreate
+
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        if request.method == "GET":  # une seule date sans gains en base
+            return httpx.Response(200, json=[{"draw_date": "2026-11-11"}])
+        return httpx.Response(200, json=[{"id": 1}])
+
+    repo = SupabaseRepository("https://x.supabase.co", "key")
+    repo._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    prizes = {"1": {"winners": 0, "amount": 15_000_000.0}}
+    items = [
+        DrawCreate(
+            draw_date=date(2026, 11, 11), numbers=[4, 5, 14, 17, 29], chance=8,
+            jackpot_euros=15_000_000, prizes=prizes,
+        ),
+        DrawCreate(  # déjà complet en base : ne doit produire aucun PATCH
+            draw_date=date(2026, 11, 9), numbers=[4, 5, 14, 37, 41], chance=8, prizes=prizes
+        ),
+    ]
+    updated = run(repo.backfill_draw_details(items))
+    assert updated == 1
+    patches = [c for c in calls if c.method == "PATCH"]
+    assert len(patches) == 1
+    assert patches[0].url.params["draw_date"] == "eq.2026-11-11"
+    assert patches[0].url.params["prizes"] == "is.null"  # garde-fou anti-écrasement

@@ -109,3 +109,97 @@ def test_validate_draw_values():
     assert validate_draw_values(date(2020, 1, 1), [1, 2, 3, 4, 5], 1) == []
     assert validate_draw_values(date(1970, 1, 1), [1, 2, 3, 4, 5], 1)  # avant 1976
     assert validate_draw_values(date(2020, 1, 1), [1, 2, 3, 4], 1)     # 4 numéros
+
+
+# --- Gains par rang et second tirage -----------------------------------------
+
+FDJ_FULL_HEADER = (
+    "annee_numero_de_tirage;jour_de_tirage;date_de_tirage;boule_1;boule_2;boule_3;boule_4;boule_5;"
+    "numero_chance;"
+    + ";".join(
+        f"nombre_de_gagnant_au_rang{n};rapport_du_rang{n}" for n in range(1, 10)
+    )
+    + ";boule_1_second_tirage;boule_2_second_tirage;boule_3_second_tirage;boule_4_second_tirage;"
+    "boule_5_second_tirage;promotion_second_tirage;"
+    + ";".join(
+        f"nombre_de_gagnant_au_rang_{n}_second_tirage;rapport_du_rang{n}_second_tirage"
+        for n in range(1, 5)
+    )
+    + "\n"
+)
+# Valeurs réelles du tirage du 11/11/2026 (virgule décimale, séparateur ;).
+FDJ_FULL_ROW = (
+    "26135;MERCREDI;11/11/2026;5;14;17;29;4;8;"
+    "0;15000000,00;4;47600,90;72;645,40;675;248,30;2926;34,20;25132;14,30;33108;8,40;"
+    "296993;3,70;365813;2,20;"
+    "18;30;34;35;44;;1;133947,00;152;1033,10;8636;46,70;139908;3,00\n"
+)
+
+
+def _row(content: str):
+    result = parse_results_file(content.encode("utf-8"))
+    assert result.rejected == []
+    return result, result.rows[0]
+
+
+def test_parse_prizes_and_second_draw():
+    result, row = _row(FDJ_FULL_HEADER + FDJ_FULL_ROW)
+    assert row.numbers == [4, 5, 14, 17, 29]
+    assert row.jackpot_euros == 15_000_000
+    assert row.prizes is not None and len(row.prizes) == 9
+    assert row.prizes["1"] == {"winners": 0, "amount": 15_000_000.0}
+    assert row.prizes["2"] == {"winners": 4, "amount": 47600.9}
+    assert row.prizes["9"] == {"winners": 365813, "amount": 2.2}
+    assert row.second_draw == {
+        "numbers": [18, 30, 34, 35, 44],
+        "promotion": None,
+        "prizes": {
+            "1": {"winners": 1, "amount": 133947.0},
+            "2": {"winners": 152, "amount": 1033.1},
+            "3": {"winners": 8636, "amount": 46.7},
+            "4": {"winners": 139908, "amount": 3.0},
+        },
+    }
+    assert result.details_incomplete == 0
+
+
+def test_parse_legacy_number_formats():
+    # Anciennes lignes : décimale tronquée, entiers sans « ,00 », promotion renseignée.
+    content = FDJ_FULL_HEADER + FDJ_FULL_ROW.replace("47600,90", "47600,9").replace(
+        "15000000,00", "15000000"
+    ).replace(";;1;133947,00", ";2;1;133947")
+    _, row = _row(content)
+    assert row.prizes["2"]["amount"] == 47600.9
+    assert row.jackpot_euros == 15_000_000
+    assert row.second_draw["promotion"] == 2
+    assert row.second_draw["prizes"]["1"]["amount"] == 133947.0
+
+
+def test_details_absent_from_simple_format():
+    _, row = _row(SIMPLE_CSV)
+    assert row.jackpot_euros is None
+    assert row.prizes is None
+    assert row.second_draw is None
+
+
+def test_unreadable_prize_cell_keeps_draw_and_flags_it():
+    content = FDJ_FULL_HEADER + FDJ_FULL_ROW.replace("47600,90", "n/a")
+    result, row = _row(content)
+    assert row.numbers == [4, 5, 14, 17, 29]  # le tirage reste importé
+    assert "2" not in row.prizes and "1" in row.prizes  # seul le rang illisible est omis
+    assert result.details_incomplete == 1
+
+
+def test_invalid_second_draw_is_dropped_not_rejected():
+    content = FDJ_FULL_HEADER + FDJ_FULL_ROW.replace(";18;30;34;35;44;", ";18;30;34;35;35;")
+    result, row = _row(content)
+    assert row.second_draw is None
+    assert row.prizes is not None
+    assert result.details_incomplete == 1
+
+
+def test_empty_second_draw_is_none_without_warning():
+    content = FDJ_FULL_HEADER + FDJ_FULL_ROW.replace(";18;30;34;35;44;", ";;;;;;")
+    result, row = _row(content)
+    assert row.second_draw is None
+    assert result.details_incomplete == 0
